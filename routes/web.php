@@ -6,6 +6,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\InvoiceController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\QuoteController;
 use App\Http\Controllers\SetupController;
@@ -109,12 +110,12 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/projects/{id}/invoice-data', [ProjectController::class, 'getInvoiceData']);
 });
 
+Route::middleware(['auth'])->group(function () {
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
+});
 Route::middleware(['auth', 'restrict.user'])->group(function () {
-
-    // Profile (Referenced in your Navbar dropdown)
-    Route::get('/profile', function () {
-        return view('profile');
-    })->name('profile');
 
     // Employee View (For non-admin redirection)
     Route::get('/employee/projects', function () {

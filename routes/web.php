@@ -88,11 +88,11 @@ Route::middleware(['auth', 'restrict.user'])->group(function () {
 
 Route::middleware(['auth', 'restrict.user'])->group(function () {
     Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory');
-    Route::post('/inventory', [InventoryController::class, 'store']); // Add Item
-    Route::put('/inventory/{id}', [InventoryController::class, 'update']); // Edit Item
-    Route::delete('/inventory/{id}', [InventoryController::class, 'destroy']); // Delete Item
-    Route::post('/inventory/{id}/stock-in', [InventoryController::class, 'stockIn']);
-    Route::post('/inventory/{id}/stock-out', [InventoryController::class, 'stockOut']);
+    Route::post('/inventory', [InventoryController::class, 'store'])->name('inventory.store'); // Add Item
+    Route::put('/inventory/{id}', [InventoryController::class, 'update'])->name('inventory.update'); // Edit Item
+    Route::delete('/inventory/{id}', [InventoryController::class, 'destroy'])->name('inventory.destroy'); // Delete Item
+    Route::post('/inventory/{id}/stock-in', [InventoryController::class, 'stockIn'])->name('inventory.stock-in');
+    Route::post('/inventory/{id}/stock-out', [InventoryController::class, 'stockOut'])->name('inventory.stock-out');
 });
 
 Route::middleware(['auth'])->group(function () {

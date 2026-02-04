@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Client;
 use App\Models\Inventory;
+use App\Models\InventoryCategory;
 use App\Models\Invoice;
 use App\Models\Project;
 use App\Models\Quote;
@@ -23,6 +24,9 @@ class DashboardController extends Controller
         $totalAcceptedQuotes = Quote::where('status', 'accepted')->count();
         $totalSentInvoices = Invoice::where('status', 'sent')->count();
         $totalInventoryItems = Inventory::count();
+        $pendingQuotes = Quote::where('status', 'pending')->get();
+        $projects = Project::where('is_active', true)->get();
+        $categories = InventoryCategory::all();
         return view('dashboard', compact(
             'totalClients',
             'totalActiveProjects',
@@ -30,7 +34,10 @@ class DashboardController extends Controller
             'clients',
             'totalInventoryItems',
             'totalAcceptedQuotes',
-            'totalSentInvoices'
+            'totalSentInvoices',
+            'pendingQuotes',
+            'projects',
+            'categories'
         ));
     }
 }

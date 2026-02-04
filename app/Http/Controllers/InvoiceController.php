@@ -65,6 +65,70 @@ class InvoiceController extends Controller
         return response()->json(['message' => 'Invoice created successfully']);
     }
 
+    public function update(Request $request, $id)
+    {
+        $invoice = Invoice::findOrFail($id);
+
+        // 1. Validation (Same as store)
+        $validated = $request->validate([
+            'project_id'    => 'required|exists:projects,id',
+            'client_id'     => 'required|exists:clients,id',
+            'issue_date'    => 'required|date',
+            'due_date'      => 'required|date|after_or_equal:issue_date',
+            'items'         => 'required|array|min:1',
+            'items.*.desc'  => 'required|string',
+            'items.*.qty'   => 'required|numeric|min:1',
+            'items.*.price' => 'required|numeric|min:0',
+        ]);
+        // Update Invoice Parent Details
+        $invoice->update([
+            'project_id' => $validated['project_id'],
+            'client_id'  => $validated['client_id'],
+            'issue_date' => $validated['issue_date'],
+            'due_date'   => $validated['due_date'],
+        ]);
+
+        $invoice->items()->delete();
+
+
+        $grandTotal = 0;
+
+        foreach ($validated['items'] as $item) {
+            $lineTotal = $item['qty'] * $item['price'];
+            $grandTotal += $lineTotal;
+
+            InvoiceItem::create([
+                'invoice_id'  => $invoice->id,
+                'description' => $item['desc'],
+                'quantity'    => $item['qty'],
+                'price'       => $item['price'],
+                'total'       => $lineTotal
+            ]);
+        }
+
+        $invoice->update(['total_amount' => $grandTotal]);
+
+
+        return response()->json(['message' => 'Invoice updated successfully']);
+    }
+    public function destroy($id)
+    {
+        try {
+            $invoice = Invoice::findOrFail($id);
+
+
+            $invoice->items()->delete();
+
+
+            $invoice->delete();
+
+            return response()->json(['message' => 'Invoice deleted successfully']);
+        } catch (\Exception $e) {
+            Log::error("Delete Error: " . $e->getMessage());
+            return response()->json(['message' => 'Failed to delete invoice.'], 500);
+        }
+    }
+
     public function sendEmail($id)
     {
         $invoice = Invoice::with(['client', 'project'])->findOrFail($id);

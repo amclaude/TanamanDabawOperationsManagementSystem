@@ -105,9 +105,12 @@ Route::middleware(['auth'])->group(function () {
 Route::middleware(['auth'])->group(function () {
     Route::get('/invoices', [InvoiceController::class, 'index'])->name('invoices');
     Route::post('/invoices', [InvoiceController::class, 'store'])->name('invoices.store');
+    Route::put('/invoices/{id}', [InvoiceController::class, 'update'])->name('invoices.update');
+    Route::delete('/invoices/{id}', [InvoiceController::class, 'destroy'])->name('invoices.destroy');
     Route::put('/invoices/{id}/pay', [App\Http\Controllers\InvoiceController::class, 'markAsPaid'])->name('invoices.pay');
     Route::post('/invoices/{id}/send', [App\Http\Controllers\InvoiceController::class, 'sendEmail'])->name('invoices.send');
     Route::get('/projects/{id}/invoice-data', [ProjectController::class, 'getInvoiceData']);
+
 });
 
 Route::middleware(['auth'])->group(function () {

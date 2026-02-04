@@ -4,25 +4,25 @@
 
 @section('content')
 
-{{-- 1. STYLES --}}
+{{-- Page Styles --}}
 <style>
-    /* Status Badges */
+    /* Status badge colors */
     .status-badge { padding: 4px 10px; border-radius: 20px; font-size: 0.85em; font-weight: 600; text-transform: capitalize; }
     .status-badge.draft { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
     .status-badge.sent { background: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd; }
     .status-badge.paid { background: #dcfce7; color: #16a34a; border: 1px solid #bbf7d0; }
     .status-badge.overdue { background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; }
 
-    /* Modal Styling */
+    /* Modal overlay and box */
     .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 1000; justify-content: center; align-items: center; }
     .modal-box { background: white; width: 700px; padding: 25px; border-radius: 8px; max-height: 90vh; overflow-y: auto; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); scrollbar-width: none; -ms-overflow-style: none; }
     .modal-box::-webkit-scrollbar { display: none; }
 
-    /* Dynamic Item Row */
+    /* Line item styling */
     .item-row { display: flex; gap: 10px; margin-bottom: 8px; align-items: center; }
     .modal-section-title { font-weight: 600; color: #334155; margin-bottom: 10px; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; margin-top: 15px; }
 
-    /* Actions */
+    /* Action buttons */
     .btn-paid { background-color: #10b981; color: white; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; transition: 0.2s; }
     .btn-paid:hover { background-color: #059669; }
     .btn-paid:disabled { background-color: #cbd5e1; cursor: not-allowed; }
@@ -72,7 +72,7 @@
                 </td>
                 <td>
                     <div style="display: flex; gap: 6px;">
-                        {{-- 1. SEND EMAIL (Blue) --}}
+                        {{-- Send Email --}}
                         <button class="btn-action send-email-btn" 
                             data-id="{{ $invoice->id }}" 
                             data-email="{{ $invoice->client->email ?? '' }}"
@@ -82,7 +82,7 @@
                         </button>
 
                         @if($invoice->status !== 'paid')
-                            {{-- 2. MARK PAID (Green) --}}
+                            {{-- Mark Paid --}}
                             <button class="btn-action mark-paid-btn" 
                                 data-id="{{ $invoice->id }}" 
                                 title="Mark as Paid"
@@ -90,16 +90,17 @@
                                 <i class="fas fa-check-circle"></i>
                             </button>
 
-                            {{-- 3. EDIT (Gray) --}}
+                            {{-- Edit --}}
                             <button class="btn-action edit-btn" 
-                                data-json="{{ json_encode($invoice->load('items')) }}" 
+                                data-id="{{ $invoice->id }}"
+                                data-json="{{ json_encode($invoice->load(['items', 'project'])) }}" 
                                 title="Edit Invoice"
                                 style="background-color:#64748b; color:white; border:none; padding:6px 10px; border-radius:6px; cursor:pointer;">
                                 <i class="fas fa-edit"></i>
                             </button>
                         @endif
 
-                        {{-- 4. DELETE (Red) --}}
+                        {{-- Delete --}}
                         <button class="btn-action delete-btn" 
                             data-id="{{ $invoice->id }}" 
                             title="Delete Invoice"
@@ -121,17 +122,20 @@
 <div class="modal-overlay" id="invoiceModal">
     <div class="modal-box">
         <div class="modal-header" style="display:flex; justify-content:space-between; margin-bottom:15px;">
-            <h3 style="margin:0;">Create New Invoice</h3>
+            <h3 style="margin:0;" id="modalTitle">Create New Invoice</h3>
             <span class="close-modal-btn" style="cursor:pointer; font-size:1.5em; color:#64748b;">&times;</span>
         </div>
 
         <form id="createInvoiceForm">
+            {{-- Hidden ID for Update logic --}}
+            <input type="hidden" id="invoiceId">
+
             <div class="input-group">
                 <label>Select Project</label>
                 <select id="projectId" required style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px; background-color:#fff;">
                     <option value="">-- Choose a Project --</option>
                     @foreach($projects as $proj)
-                    <option value="{{ $proj->id }}">{{ $proj->project_name }}</option>
+                    <option value="{{ $proj->id }}" data-client-id="{{ $proj->client_id }}" data-client-name="{{ $proj->client->name }}">{{ $proj->project_name }}</option>
                     @endforeach
                 </select>
                 <small style="color:#64748b;">Selecting a project will auto-fill the client and items.</small>
@@ -183,58 +187,89 @@
 <script>
     document.addEventListener('DOMContentLoaded', () => {
 
-        // --- VARIABLES ---
+        // DOM elements
         const modal = document.getElementById('invoiceModal');
+        const modalTitle = document.getElementById('modalTitle');
         const openBtn = document.getElementById('addInvoiceBtn');
         const closeBtn = document.querySelector('.close-modal-btn');
         const cancelBtn = document.querySelector('.btn-cancel');
         const form = document.getElementById('createInvoiceForm');
 
+        const invoiceIdInput = document.getElementById('invoiceId');
         const projectSelect = document.getElementById('projectId');
         const clientDisplay = document.getElementById('clientNameDisplay');
         const clientIdInput = document.getElementById('clientId');
         const itemsContainer = document.getElementById('itemsContainer');
         const totalDisplay = document.getElementById('displayTotal');
         const emptyStateMsg = document.getElementById('emptyStateMsg');
+        const saveBtn = document.getElementById('saveBtn');
 
-        // --- OPEN / CLOSE MODAL ---
+        let isEditMode = false;
+
+        // Modal handlers
         const openModal = () => {
             modal.style.display = 'flex';
-            const today = new Date();
-            document.getElementById('issueDate').valueAsDate = today;
-            const due = new Date();
-            due.setDate(today.getDate() + 15);
-            document.getElementById('dueDate').valueAsDate = due;
         };
-        const closeModal = () => modal.style.display = 'none';
+        const closeModal = () => {
+            modal.style.display = 'none';
+            form.reset();
+            itemsContainer.innerHTML = '';
+            itemsContainer.appendChild(emptyStateMsg);
+            totalDisplay.innerText = '₱0.00';
+            isEditMode = false;
+            invoiceIdInput.value = '';
+        };
 
-        if (openBtn) openBtn.addEventListener('click', openModal);
+        if (openBtn) {
+            openBtn.addEventListener('click', () => {
+                isEditMode = false;
+                modalTitle.innerText = "Create New Invoice";
+                saveBtn.innerText = "Create Invoice";
+                
+                const today = new Date().toISOString().split('T')[0];
+                document.getElementById('issueDate').value = today;
+                
+                // Default due date: +15 days
+                const due = new Date(); due.setDate(due.getDate() + 15);
+                document.getElementById('dueDate').value = due.toISOString().split('T')[0];
+                
+                openModal();
+            });
+        }
+
         if (closeBtn) closeBtn.addEventListener('click', closeModal);
         if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
-        // window.addEventListener('click', (e) => {
-        //     if (e.target === modal) closeModal();
-        // });
 
-        // --- 1. SMART FETCH LOGIC (Project -> Items) ---
+        // Fetch project details (Client & Items)
         if (projectSelect) {
             projectSelect.addEventListener('change', async function() {
                 const projectId = this.value;
+                const option = this.options[this.selectedIndex];
+                
                 if (!projectId) {
-                    itemsContainer.innerHTML = '';
-                    itemsContainer.appendChild(emptyStateMsg);
-                    clientDisplay.value = '';
-                    calculateTotal();
+                    if(!isEditMode) {
+                        itemsContainer.innerHTML = '';
+                        itemsContainer.appendChild(emptyStateMsg);
+                        clientDisplay.value = '';
+                        calculateTotal();
+                    }
                     return;
                 }
+
+                // Populate client info from data attributes
+                if (option.dataset.clientId) {
+                    clientIdInput.value = option.dataset.clientId;
+                    clientDisplay.value = option.dataset.clientName;
+                }
+
+                // Skip default item loading if we are editing an existing invoice
+                if(isEditMode) return; 
 
                 itemsContainer.innerHTML = '<div style="color:#64748b; padding:10px; text-align:center;"><i class="fas fa-spinner fa-spin"></i> Loading project details...</div>';
 
                 try {
                     const response = await fetch(`/projects/${projectId}/invoice-data`);
                     const data = await response.json();
-
-                    clientDisplay.value = data.client_name || 'Unknown Client';
-                    clientIdInput.value = data.client_id;
 
                     itemsContainer.innerHTML = ''; 
                     if (data.items && data.items.length > 0) {
@@ -252,8 +287,12 @@
             });
         }
 
-        // --- 2. DYNAMIC ROWS ---
+        // Line item management
         function createRow(desc = '', qty = 1, price = 0) {
+            if(document.getElementById('emptyStateMsg')) {
+                document.getElementById('emptyStateMsg').remove();
+            }
+
             const div = document.createElement('div');
             div.classList.add('item-row');
             div.innerHTML = `
@@ -265,6 +304,7 @@
             div.querySelectorAll('input').forEach(i => i.addEventListener('input', calculateTotal));
             div.querySelector('.remove-btn').addEventListener('click', () => { div.remove(); calculateTotal(); });
             itemsContainer.appendChild(div);
+            calculateTotal();
         }
 
         document.getElementById('addItemBtn').addEventListener('click', () => createRow());
@@ -279,13 +319,45 @@
             totalDisplay.innerText = '₱' + total.toLocaleString('en-US', { minimumFractionDigits: 2 });
         }
 
-        // --- 3. SUBMIT FORM ---
+        // Handle edit button click
+        document.querySelectorAll('.edit-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                isEditMode = true;
+                const invoiceData = JSON.parse(this.getAttribute('data-json'));
+                const invoiceId = this.getAttribute('data-id');
+
+                modalTitle.innerText = "Edit Invoice";
+                saveBtn.innerText = "Update Invoice";
+                invoiceIdInput.value = invoiceId;
+
+                // Set initial form values
+                projectSelect.value = invoiceData.project_id;
+                clientIdInput.value = invoiceData.client_id;
+                clientDisplay.value = invoiceData.client ? invoiceData.client.name : 'Unknown';
+                
+                document.getElementById('issueDate').value = invoiceData.issue_date;
+                document.getElementById('dueDate').value = invoiceData.due_date;
+
+                // Populate existing items
+                itemsContainer.innerHTML = '';
+                if(invoiceData.items && invoiceData.items.length > 0) {
+                    invoiceData.items.forEach(item => {
+                        createRow(item.description, item.quantity, item.price);
+                    });
+                } else {
+                    createRow();
+                }
+
+                openModal();
+                calculateTotal();
+            });
+        });
+
+        // Form submission
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const saveBtn = document.getElementById('saveBtn');
             const originalText = saveBtn.innerText;
-
-            saveBtn.innerText = 'Creating...';
+            saveBtn.innerText = 'Processing...';
             saveBtn.disabled = true;
 
             const items = [];
@@ -312,16 +384,31 @@
                 items: items
             };
 
+            // Set route and method based on mode
+            let url = "{{ route('invoices.store') }}";
+            let method = "POST";
+
+            if (isEditMode && invoiceIdInput.value) {
+                url = `/invoices/${invoiceIdInput.value}`;
+                method = "PUT";
+            }
+
             try {
-                const response = await fetch("{{ route('invoices.store') }}", {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': "{{ csrf_token() }}" },
+                const response = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': "{{ csrf_token() }}", 'Accept': 'application/json' },
                     body: JSON.stringify(payload)
                 });
 
                 if (response.ok) {
-                    modal.style.display = 'none';
-                    Swal.fire({ title: 'Success!', text: 'Invoice created successfully.', icon: 'success', timer: 1500, showConfirmButton: false }).then(() => window.location.reload());
+                    closeModal();
+                    Swal.fire({ 
+                        title: 'Success!', 
+                        text: isEditMode ? 'Invoice updated successfully.' : 'Invoice created successfully.', 
+                        icon: 'success', 
+                        timer: 1500, 
+                        showConfirmButton: false 
+                    }).then(() => window.location.reload());
                 } else {
                     const result = await response.json();
                     Swal.fire('Error', result.message || 'Validation failed.', 'error');
@@ -336,7 +423,7 @@
             }
         });
 
-        // --- 4. MARK AS PAID LOGIC ---
+        // Mark as paid handler
         document.querySelectorAll('.mark-paid-btn').forEach(btn => {
             btn.addEventListener('click', function() {
                 const invoiceId = this.getAttribute('data-id');
@@ -369,7 +456,7 @@
             });
         });
 
-        // --- 5. SEND EMAIL LOGIC (New) ---
+        // Email handler
         document.querySelectorAll('.send-email-btn').forEach(btn => {
             btn.addEventListener('click', function() {
                 const invoiceId = this.getAttribute('data-id');
@@ -390,7 +477,6 @@
                     confirmButtonText: 'Yes, Send it!'
                 }).then(async (result) => {
                     if (result.isConfirmed) {
-                        // Show loading because SMTP is slow
                         Swal.fire({
                             title: 'Sending...',
                             text: 'Please wait while we email the client.',
@@ -424,10 +510,11 @@
             });
         });
 
-        // --- 6. DELETE LOGIC ---
+        // Delete handler
         document.querySelectorAll('.delete-btn').forEach(btn => {
             btn.addEventListener('click', function() {
                 const id = this.getAttribute('data-id');
+                
                 Swal.fire({
                     title: 'Delete Invoice?',
                     text: "You won't be able to revert this!",
@@ -443,20 +530,30 @@
                                 method: 'DELETE',
                                 headers: { 'X-CSRF-TOKEN': "{{ csrf_token() }}", 'Accept': 'application/json' }
                             });
+
                             if (response.ok) {
-                                Swal.fire('Deleted!', 'Invoice has been deleted.', 'success').then(() => window.location.reload());
+                                Swal.fire({
+                                    title: 'Deleted!',
+                                    text: 'Invoice has been deleted.',
+                                    icon: 'success',
+                                    timer: 1500,
+                                    showConfirmButton: false
+                                }).then(() => {
+                                    window.location.reload();
+                                });
                             } else {
                                 Swal.fire('Error', 'Could not delete invoice.', 'error');
                             }
                         } catch (error) {
                             console.error(error);
+                            Swal.fire('Error', 'System error occurred.', 'error');
                         }
                     }
                 });
             });
         });
 
-        // --- SEARCH LOGIC ---
+        // Filter table rows
         const searchInput = document.getElementById('searchInput');
         const tableBody = document.getElementById('invoiceTableBody');
         if (searchInput && tableBody) {

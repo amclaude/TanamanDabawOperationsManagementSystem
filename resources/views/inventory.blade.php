@@ -11,10 +11,17 @@
     }
 
     .btn-secondary {
-        background-color: #64748b; color: white; padding: 8px 12px;
-        border: none; border-radius: 4px; cursor: pointer;
+        background-color: #64748b;
+        color: white;
+        padding: 8px 12px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
     }
-    .btn-secondary:hover { background-color: #475569; }
+
+    .btn-secondary:hover {
+        background-color: #475569;
+    }
 
     .btn-primary {
         background-color: #319B72;
@@ -147,7 +154,7 @@
 </div>
 
 <div class="table-container">
-    <table class="data-table" >
+    <table class="data-table">
         <thead>
             <tr>
                 <th>Item Name</th>
@@ -230,7 +237,7 @@
             <h3>Transaction History</h3>
             <span class="close-modal-btn" id="closeHistory">&times;</span>
         </div>
-        
+
         <div style="padding: 20px; max-height: 60vh; overflow-y: auto;">
             <table class="data-table" style="width: 100%;">
                 <thead>
@@ -244,25 +251,25 @@
                 </thead>
                 <tbody>
                     @if(isset($transactions) && $transactions->count() > 0)
-                        @foreach($transactions as $log)
-                        <tr>
-                            <td style="color: #64748b; font-size: 0.9rem;">{{ $log->created_at->format('M d, h:i A') }}</td>
-                            <td style="font-weight: 600;">{{ $log->inventory->item_name ?? 'Deleted Item' }}</td>
-                            <td>
-                                @if($log->type === 'IN')
-                                    <span class="badge-in">IN</span>
-                                @else
-                                    <span class="badge-out">OUT</span>
-                                @endif
-                            </td>
-                            <td style="font-weight: 700;">{{ $log->quantity }}</td>
-                            <td style="color: #475569; font-size: 0.9rem;">{{ $log->reason ?? '--' }}</td>
-                        </tr>
-                        @endforeach
+                    @foreach($transactions as $log)
+                    <tr>
+                        <td style="color: #64748b; font-size: 0.9rem;">{{ $log->created_at->format('M d, h:i A') }}</td>
+                        <td style="font-weight: 600;">{{ $log->inventory->item_name ?? 'Deleted Item' }}</td>
+                        <td>
+                            @if($log->type === 'IN')
+                            <span class="badge-in">IN</span>
+                            @else
+                            <span class="badge-out">OUT</span>
+                            @endif
+                        </td>
+                        <td style="font-weight: 700;">{{ $log->quantity }}</td>
+                        <td style="color: #475569; font-size: 0.9rem;">{{ $log->reason ?? '--' }}</td>
+                    </tr>
+                    @endforeach
                     @else
-                        <tr>
-                            <td colspan="5" style="text-align: center; padding: 20px; color: #64748b;">No history available.</td>
-                        </tr>
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 20px; color: #64748b;">No history available.</td>
+                    </tr>
                     @endif
                 </tbody>
             </table>
@@ -434,11 +441,11 @@
         const viewHistoryBtn = document.getElementById('viewHistoryBtn');
         const closeHistory = document.getElementById('closeHistory');
         const closeHistoryBtn = document.getElementById('closeHistoryBtn');
-        
+
         // History Modal
-        if(viewHistoryBtn) viewHistoryBtn.addEventListener('click', () => historyModal.style.display = 'flex');
-        if(closeHistory) closeHistory.addEventListener('click', () => historyModal.style.display = 'none');
-        if(closeHistoryBtn) closeHistoryBtn.addEventListener('click', () => historyModal.style.display = 'none');
+        if (viewHistoryBtn) viewHistoryBtn.addEventListener('click', () => historyModal.style.display = 'flex');
+        if (closeHistory) closeHistory.addEventListener('click', () => historyModal.style.display = 'none');
+        if (closeHistoryBtn) closeHistoryBtn.addEventListener('click', () => historyModal.style.display = 'none');
 
         // Add / Edit Item Logic ---
         const addItemModal = document.getElementById('addItemModal');
@@ -505,8 +512,12 @@
                 });
 
                 const data = await res.json();
-                if (res.ok) showSuccess(data.message);
-                else showError(data.message || 'Validation failed');
+                if (res.ok) {
+                    closeItem();
+                    document.querySelector("button[type='submit']").disabled = false;
+                    showSuccess(data.message);
+                    
+                } else showError(data.message || 'Validation failed');
             } catch (err) {
                 showError('System error occurred');
             }
@@ -601,8 +612,8 @@
 
         // Search logic
         const searchInput = document.getElementById('searchInput');
-        
-        const tableBody = document.getElementById('inventoryTableBody'); 
+
+        const tableBody = document.getElementById('inventoryTableBody');
 
         if (searchInput && tableBody) {
             searchInput.addEventListener('keyup', function() {
@@ -611,7 +622,7 @@
 
                 for (let i = 0; i < rows.length; i++) {
                     let textContent = rows[i].innerText.toLowerCase();
-                    
+
                     // Toggle visibility based on search match
                     if (textContent.includes(filter)) {
                         rows[i].style.display = "";
@@ -647,12 +658,12 @@
         });
 
         // Close modals on outside click
-        window.addEventListener('click', (e) => {
-            if (e.target === addItemModal) closeItem();
-            if (e.target === stockInModal) closeStockIn();
-            if (e.target === stockOutModal) closeStockOut();
-            if (e.target === historyModal) closeHistory();
-        });
+        // window.addEventListener('click', (e) => {
+        //     if (e.target === addItemModal) closeItem();
+        //     if (e.target === stockInModal) closeStockIn();
+        //     if (e.target === stockOutModal) closeStockOut();
+        //     if (e.target === historyModal) closeHistory();
+        // });
     });
 </script>
 @endpush

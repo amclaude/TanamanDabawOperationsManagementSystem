@@ -27,10 +27,10 @@ class ClientController extends Controller
     public function create(Request $request)
     {
         $validated = $request->validate([
-            'name'     => 'required|string|max:255',
+            'name'     => 'required|string|max:100',
             'email'    => 'required|email|unique:users,email',
             'phone' => 'required|string|regex:/^09\d{9}$/',
-            'address' => 'required|string|max:100',
+            'address' => 'required|string|max:255',
         ]);
         Client::create([
             'name'     => $validated['name'],
@@ -45,10 +45,21 @@ class ClientController extends Controller
     }
 
     public function update(Request $request, string $id)
-    {
+    {   
+        $validated = $request->validate([
+            'name'     => 'required|string|max:100',
+            'email'    => 'required|email|unique:users,email',
+            'phone' => 'required|string|regex:/^09\d{9}$/',
+            'address' => 'required|string|max:255',
+        ]);
         $client = Client::find($id);
         if ($client) {
-            $client->update($request->all());
+            $client->update([
+                'name'     => $validated['name'],
+                'email'    => $validated['email'],
+                'phone' => $validated['phone'],
+                'address' => $validated['address'],
+            ]);
 
             return response()->json([
                 'message' => 'Client updated successfully'

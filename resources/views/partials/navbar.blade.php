@@ -42,6 +42,22 @@
 </nav>
 @push('scripts')
 <script>
+    const menuToggle = document.getElementById('menu-toggle');
+    const sidebar = document.querySelector('.sidebar');
+
+    if (menuToggle && sidebar) {
+        menuToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            sidebar.classList.toggle('active');
+        });
+        document.addEventListener('click', (e) => {
+            if (sidebar.classList.contains('active') &&
+                !sidebar.contains(e.target) &&
+                e.target !== menuToggle) {
+                sidebar.classList.remove('active');
+            }
+        });
+    }
     document.addEventListener('DOMContentLoaded', function() {
         const profileTrigger = document.getElementById('profile-trigger');
         const dropdownMenu = document.getElementById('profile-dropdown');

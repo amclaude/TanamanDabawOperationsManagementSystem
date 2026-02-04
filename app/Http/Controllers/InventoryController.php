@@ -26,28 +26,26 @@ class InventoryController extends Controller
     public function store(Request $request)
     {
         // Validate inputs matching the Modal Form
-        $validator = Validator::make($request->all(), [
-            'name'        => 'required|string|max:255',
+        $validated = $request->validate( [
+            'name'        => 'required|string|unique:inventory,item_name|max:255',
             'sku'         => 'required|string|unique:inventory,sku',
             'category_id' => 'required|exists:inventory_categories,id',
             'price'       => 'required|numeric|min:0',
             'stock'       => 'required|integer|min:0',
+        ], [
+            'name.unique' => 'This item name is already in use.',
+            'sku.unique' => 'This SKU is already in use.',
+            'stock.min'  => 'Stock must be at least 0.',
+            'price.min'  => 'Price must be at least 0.',
         ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'status' => 'error',
-                'errors' => $validator->errors()
-            ], 422);
-        }
 
         // Create the item
         $item = Inventory::create([
-            'item_name'    => $request->name,
-            'sku'          => $request->sku,
-            'category_id'  => $request->category_id,
-            'price'        => $request->price,
-            'stock_level'  => $request->stock,
+            'item_name'    => $validated['name'],
+            'sku'          => $validated['sku'],
+            'category_id'  => $validated['category_id'],
+            'price'        => $validated['price'],
+            'stock_level'  => $validated['stock'],
         ]);
 
         // Log the transaction

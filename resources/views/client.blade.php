@@ -136,7 +136,7 @@
 
             <div class="input-group">
                 <label>Phone Number</label>
-                <input id="phone" placeholder="+639xxxxxxxxx" type="tel" pattern="(?:\+63|0)9\d{2}-\d{3}-\d{4}|(?:\+63|0)2\d{1}-\d{3}-\d{4}" required>
+                <input id="phone" placeholder="+09xxxxxxxxx" type="tel" pattern="(?:\+63|0)9\d{2}-\d{3}-\d{4}|(?:\+63|0)2\d{1}-\d{3}-\d{4}" required>
             </div>
 
             <div class="input-group">
@@ -232,7 +232,7 @@
             nameField.value = '';
             emailField.value = '';
             phoneField.value = '';
-            phoneField.placeholder='+639xx000xxxx';
+            phoneField.placeholder='09xx000xxxx';
             addressField.value = '';
 
             modalTitle.innerText = "Add New Client";
@@ -314,9 +314,9 @@
     };
     if (closeBtn) closeBtn.addEventListener('click', closeModal);
     if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
-    window.addEventListener('click', (e) => {
-        if (e.target === modal) closeModal();
-    });
+    // window.addEventListener('click', (e) => {
+    //     if (e.target === modal) closeModal();
+    // });
 
     if (saveBtn) {
         saveBtn.addEventListener('click', async (e) => {

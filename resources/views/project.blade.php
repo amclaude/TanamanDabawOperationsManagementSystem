@@ -499,7 +499,7 @@
     const closeModal = () => { modal.style.display = 'none'; };
     if (closeBtn) closeBtn.addEventListener('click', closeModal);
     if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
-    window.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+    // window.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
 
     // --- SEARCH LOGIC ---
     const searchInput = document.getElementById('searchInput');

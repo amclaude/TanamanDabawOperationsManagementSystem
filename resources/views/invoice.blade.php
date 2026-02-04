@@ -118,7 +118,6 @@
     </table>
 </div>
 
-{{-- 2. CREATE INVOICE MODAL --}}
 <div class="modal-overlay" id="invoiceModal">
     <div class="modal-box">
         <div class="modal-header" style="display:flex; justify-content:space-between; margin-bottom:15px;">
@@ -212,9 +211,9 @@
         if (openBtn) openBtn.addEventListener('click', openModal);
         if (closeBtn) closeBtn.addEventListener('click', closeModal);
         if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
-        window.addEventListener('click', (e) => {
-            if (e.target === modal) closeModal();
-        });
+        // window.addEventListener('click', (e) => {
+        //     if (e.target === modal) closeModal();
+        // });
 
         // --- 1. SMART FETCH LOGIC (Project -> Items) ---
         if (projectSelect) {
@@ -260,7 +259,7 @@
             div.innerHTML = `
                 <input type="text" class="item-desc" value="${desc}" placeholder="Description" style="flex:2; padding:8px; border:1px solid #ddd; border-radius:4px; outline:none;" required>
                 <input type="number" class="item-qty" value="${qty}" min="1" placeholder="Qty" style="flex:0.5; padding:8px; border:1px solid #ddd; border-radius:4px; outline:none;" required>
-                <input type="number" class="item-price" value="${price}" min="0" step="0.01" placeholder="Price" style="flex:1; padding:8px; border:1px solid #ddd; border-radius:4px; outline:none;" required>
+                <input type="number" class="item-price" value="${price}" min="0"  step="0.01" placeholder="Price" style="flex:1; padding:8px; border:1px solid #ddd; border-radius:4px; outline:none;" required>
                 <button type="button" class="remove-btn" style="color:#ef4444; border:none; background:none; cursor:pointer; font-size:1.1rem; padding:0 5px;" title="Remove Item">&times;</button>
             `;
             div.querySelectorAll('input').forEach(i => i.addEventListener('input', calculateTotal));

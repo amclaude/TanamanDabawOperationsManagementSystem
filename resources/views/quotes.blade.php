@@ -299,9 +299,9 @@
         const closeModal = () => modal.style.display = 'none';
         document.querySelector('.close-modal-btn').addEventListener('click', closeModal);
         document.querySelector('.btn-cancel').addEventListener('click', closeModal);
-        window.addEventListener('click', (e) => {
-            if (e.target === modal) closeModal();
-        });
+        // window.addEventListener('click', (e) => {
+        //     if (e.target === modal) closeModal();
+        // });
 
         document.getElementById('addItemBtn').addEventListener('click', () => createItemRow());
 

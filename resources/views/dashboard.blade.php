@@ -40,7 +40,7 @@
         <div class="stat-text">
             <h3>Employees</h3>
             <p class="number">{{ $totalEmployees }}</p>
-            <a href="employee.html" class="details-link">View details</a>
+            <a href="{{ route('employees') }}" class="details-link">View details</a>
         </div>
         <div class="stat-icon icon-bg-purple">
             <i class="fas fa-user-check"></i>
@@ -49,9 +49,9 @@
 
     <div class="stat-card">
         <div class="stat-text">
-            <h3>Quotes Sent</h3>
-            <p class="number">0</p>
-            <a href="quote.html" class="details-link">View details</a>
+            <h3>Quotes Accepted</h3>
+            <p class="number">{{ $totalAcceptedQuotes }}</p>
+            <a href="{{ route('quotes') }}" class="details-link">View details</a>
         </div>
         <div class="stat-icon icon-bg-orange">
             <i class="fas fa-file-alt"></i>
@@ -60,9 +60,9 @@
 
     <div class="stat-card">
         <div class="stat-text">
-            <h3>Invoices Issued</h3>
-            <p class="number">0</p>
-            <a href="invoice.html" class="details-link">View details</a>
+            <h3>Invoices Sent</h3>
+            <p class="number">{{ $totalSentInvoices }}</p>
+            <a href="{{ route('invoices') }}" class="details-link">View details</a>
         </div>
         <div class="stat-icon icon-bg-teal">
             <i class="fas fa-file-invoice-dollar"></i>
@@ -73,7 +73,7 @@
         <div class="stat-text">
             <h3>Inventory Items</h3>
             <p class="number">{{ $totalInventoryItems }}</p>
-            <a href="inventory.html" class="details-link">View details</a>
+            <a href="{{ route('inventory') }}" class="details-link">View details</a>
         </div>
         <div class="stat-icon icon-bg-red">
             <i class="fas fa-boxes"></i>

@@ -5,70 +5,56 @@
 @section('content')
 
 <style>
-    .status-badge.pending {
-        background: #fff7ed;
-        color: #c2410c;
-        border: 1px solid #ffedd5;
+    /* Status Badges */
+    .status-badge {
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: capitalize;
+    }
+    .status-badge.pending { background: #fff7ed; color: #c2410c; border: 1px solid #ffedd5; }
+    .status-badge.accepted { background: #f0fdf4; color: #15803d; border: 1px solid #dcfce7; }
+    .status-badge.rejected { background: #fef2f2; color: #b91c1c; border: 1px solid #fee2e2; }
+    
+    /* Archived Status Design */
+    .status-badge.archived {
+        background-color: #f1f5f9;
+        color: #64748b;
+        border: 1px solid #cbd5e1;
     }
 
-    .status-badge.accepted {
-        background: #f0fdf4;
-        color: #15803d;
-        border: 1px solid #dcfce7;
-    }
-
-    .status-badge.rejected {
-        background: #fef2f2;
-        color: #b91c1c;
-        border: 1px solid #fee2e2;
-    }
-
-    .item-row {
-        display: flex;
-        gap: 8px;
-        margin-bottom: 8px;
-        align-items: center;
-    }
-
-    .ts-control {
-        border-radius: 6px;
-        padding: 10px;
-        border: 1px solid #ddd;
-    }
-
-    .ts-dropdown {
-        z-index: 99999 !important;
-    }
+    /* Table & Actions */
+    .item-row { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
+    .ts-control { border-radius: 6px; padding: 10px; border: 1px solid #ddd; }
+    .ts-dropdown { z-index: 99999 !important; }
 
     .btn-action {
-        width: 32px;
-        height: 32px;
-        border-radius: 6px;
-        border: none;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-size: 1rem;
-        cursor: pointer;
-        transition: opacity 0.2s;
-        margin-right: 6px;
+        width: 32px; height: 32px; border-radius: 6px; border: none;
+        display: inline-flex; align-items: center; justify-content: center;
+        color: white; font-size: 1rem; cursor: pointer; transition: opacity 0.2s; margin-right: 6px;
     }
+    .edit-btn { background-color: #10b981; }
+    .edit-btn:hover { background-color: #059669; }
+    .delete-btn { background-color: #ef4444; }
+    .delete-btn:hover { background-color: #dc2626; }
+    
+    /* View Button Design */
+    .view-btn { background-color: #10b981; color: #fff; border: 1px solid #dbeafe; }
+    .view-btn:hover { background-color: #059669; }
 
-    .edit-btn {
-        background-color: #10b981;
+    /* Helper to hide elements in View Mode */
+    .view-mode-active .btn-remove,
+    .view-mode-active #addItemBtn,
+    .view-mode-active #saveQuoteBtn {
+        display: none !important;
     }
-
-    .edit-btn:hover {
-        background-color: #059669;
-    }
-
-    .delete-btn {
-        background-color: #ef4444;
-    }
-
-    .delete-btn:hover {
-        background-color: #dc2626;
+    
+    /* Visually indicate disabled inputs in view mode */
+    .view-mode-active input {
+        background-color: #f8fafc;
+        border-color: #e2e8f0;
+        color: #64748b;
     }
 </style>
 
@@ -110,20 +96,28 @@
                 <td>₱{{ number_format($quote->total_amount, 2) }}</td>
                 <td>{{ \Carbon\Carbon::parse($quote->quote_date)->format('M d, Y') }}</td>
                 <td>
-                    <span class="status-badge {{ $quote->status }}">{{ ucfirst($quote->status) }}</span>
+                    <span class="status-badge {{ strtolower($quote->status) }}">{{ ucfirst($quote->status) }}</span>
                 </td>
                 <td>
-                    <button class="btn-action edit-btn" data-quote="{{ json_encode($quote) }}" title="Edit">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn-action delete-btn" data-id="{{ $quote->id }}" title="Delete">
-                        <i class="fas fa-trash-alt"></i>
-                    </button>
+                    @if(strtolower($quote->status) === 'archived')
+                        {{-- ARCHIVED: Show Eye, Hide Delete --}}
+                        <button class="btn-action view-btn" data-quote="{{ json_encode($quote) }}" title="View Details">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    @else
+                        {{-- ACTIVE: Show Edit & Delete --}}
+                        <button class="btn-action edit-btn" data-quote="{{ json_encode($quote) }}" title="Edit">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn-action delete-btn" data-id="{{ $quote->id }}" title="Delete">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    @endif
                 </td>
             </tr>
             @empty
             <tr>
-                <td colspan="6" style="text-align: center; padding: 20px; color: #64748b;">No quotes found.</td>
+                <td colspan="5" style="text-align: center; padding: 20px; color: #64748b;">No quotes found.</td>
             </tr>
             @endforelse
         </tbody>
@@ -178,7 +172,7 @@
             </div>
 
             <div class="modal-actions">
-                <button type="button" class="btn-cancel">Cancel</button>
+                <button type="button" class="btn-cancel">Close</button>
                 <button type="submit" class="btn-save" id="saveQuoteBtn">Create Quote</button>
             </div>
         </form>
@@ -195,14 +189,12 @@
     document.addEventListener('DOMContentLoaded', () => {
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
+        // Initialize TomSelect
         let clientSelect;
         if (document.getElementById('clientId')) {
             clientSelect = new TomSelect("#clientId", {
                 create: false,
-                sortField: {
-                    field: "text",
-                    direction: "asc"
-                },
+                sortField: { field: "text", direction: "asc" },
                 placeholder: "Select a Client..."
             });
         }
@@ -213,9 +205,12 @@
         const itemsContainer = document.getElementById('itemsContainer');
         const totalInput = document.getElementById('displayTotal');
         const saveBtn = document.getElementById('saveQuoteBtn');
+        const addItemBtn = document.getElementById('addItemBtn');
 
         let isEditMode = false;
         let editId = null;
+
+        // --- Helper Functions ---
 
         function calculateTotal() {
             let total = 0;
@@ -224,9 +219,7 @@
                 const price = parseFloat(row.querySelector('.item-price').value) || 0;
                 total += (qty * price);
             });
-            totalInput.value = '₱ ' + total.toLocaleString('en-US', {
-                minimumFractionDigits: 2
-            });
+            totalInput.value = '₱ ' + total.toLocaleString('en-US', { minimumFractionDigits: 2 });
         }
 
         function createItemRow(desc = '', qty = 1, price = '') {
@@ -241,7 +234,10 @@
                 </button>
             `;
 
+            // Add event listeners for calculation
             div.querySelectorAll('input').forEach(input => input.addEventListener('input', calculateTotal));
+            
+            // Remove functionality
             div.querySelector('.btn-remove').addEventListener('click', () => {
                 div.remove();
                 calculateTotal();
@@ -251,12 +247,29 @@
             calculateTotal();
         }
 
+        function resetModalState() {
+            // Unlock TomSelect
+            if(clientSelect) clientSelect.unlock();
+            
+            // Enable all inputs
+            form.querySelectorAll('input').forEach(input => input.disabled = false);
+            
+            // Remove View Mode class (shows buttons again)
+            form.classList.remove('view-mode-active');
+            
+            // Show Save Button and reset text
+            saveBtn.style.display = 'inline-block';
+            
+            form.reset();
+        }
+
+        // --- Event Listeners ---
         document.getElementById('addQuoteBtn').addEventListener('click', () => {
+            resetModalState();
             isEditMode = false;
             editId = null;
             modalTitle.innerText = "Create New Quote";
             saveBtn.innerText = "Create Quote";
-            form.reset();
 
             if (clientSelect) clientSelect.clear();
 
@@ -269,10 +282,12 @@
             modal.style.display = 'flex';
         });
 
-        document.querySelectorAll('.edit-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
+        document.addEventListener('click', function(e) {
+            const editBtn = e.target.closest('.edit-btn');
+            if (editBtn) {
+                resetModalState();
                 isEditMode = true;
-                const quote = JSON.parse(btn.dataset.quote);
+                const quote = JSON.parse(editBtn.dataset.quote);
                 editId = quote.id;
 
                 modalTitle.innerText = `Edit Quote`;
@@ -291,22 +306,70 @@
                 } else {
                     createItemRow();
                 }
-
                 modal.style.display = 'flex';
-            });
+            }
         });
 
+        document.addEventListener('click', function(e) {
+            const viewBtn = e.target.closest('.view-btn');
+            if (viewBtn) {
+                resetModalState(); // Start clean
+                
+                const quote = JSON.parse(viewBtn.dataset.quote);
+                
+                // Set UI to "View Mode"
+                modalTitle.innerText = "View Quote (Archived)";
+                form.classList.add('view-mode-active'); // CSS handles hiding buttons/styling
+                
+                // Populate Data
+                if (clientSelect) {
+                    clientSelect.setValue(quote.client_id);
+                    clientSelect.lock(); // Disable dropdown
+                }
+                
+                document.getElementById('quoteSubject').value = quote.subject || '';
+                document.getElementById('quoteDate').value = quote.quote_date;
+                document.getElementById('validUntil').value = quote.valid_until;
+                
+                // Disable inputs
+                form.querySelectorAll('input').forEach(input => input.disabled = true);
+
+                // Populate Items (read-only)
+                itemsContainer.innerHTML = '';
+                if (quote.items && quote.items.length > 0) {
+                    quote.items.forEach(item => {
+                        createItemRow(item.description, item.quantity, item.price);
+                    });
+                } else {
+                    // Show one empty row if none exist, but disabled
+                    createItemRow();
+                }
+                
+                // Re-disable item inputs (since createItemRow makes them enabled by default)
+                itemsContainer.querySelectorAll('input').forEach(input => input.disabled = true);
+
+                modal.style.display = 'flex';
+            }
+        });
+
+        // Close Modal Logic
         const closeModal = () => modal.style.display = 'none';
         document.querySelector('.close-modal-btn').addEventListener('click', closeModal);
         document.querySelector('.btn-cancel').addEventListener('click', closeModal);
-        // window.addEventListener('click', (e) => {
-        //     if (e.target === modal) closeModal();
-        // });
 
-        document.getElementById('addItemBtn').addEventListener('click', () => createItemRow());
+        document.getElementById('addItemBtn').addEventListener('click', () => {
+            // Only allow adding items if NOT in view mode
+            if(!form.classList.contains('view-mode-active')) {
+                createItemRow();
+            }
+        });
 
+        // Form Submit (Create/Update)
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
+            
+            // Safety check: Do not submit if in view mode
+            if(form.classList.contains('view-mode-active')) return;
 
             const items = [];
             document.querySelectorAll('.item-row').forEach(row => {
@@ -364,9 +427,11 @@
             }
         });
 
-        document.querySelectorAll('.delete-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const id = btn.dataset.id;
+        // Delete Logic (Delegated)
+        document.addEventListener('click', function(e) {
+            const deleteBtn = e.target.closest('.delete-btn');
+            if (deleteBtn) {
+                const id = deleteBtn.dataset.id;
                 Swal.fire({
                     title: 'Delete Quote?',
                     text: "You can restore this later.",
@@ -379,9 +444,7 @@
                         try {
                             const res = await fetch(`/quotes/${id}`, {
                                 method: 'DELETE',
-                                headers: {
-                                    'X-CSRF-TOKEN': csrfToken
-                                }
+                                headers: { 'X-CSRF-TOKEN': csrfToken }
                             });
                             if (res.ok) window.location.reload();
                         } catch (err) {
@@ -389,12 +452,12 @@
                         }
                     }
                 });
-            });
+            }
         });
 
+        // Search Logic
         const searchInput = document.getElementById('searchInput');
         const tableBody = document.getElementById('quotesTableBody');
-
         if (searchInput && tableBody) {
             searchInput.addEventListener('keyup', function() {
                 const filter = searchInput.value.toLowerCase();

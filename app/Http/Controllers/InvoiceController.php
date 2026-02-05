@@ -159,6 +159,12 @@ class InvoiceController extends Controller
 
         // Update the status
         $invoice->update(['status' => 'paid']);
+        // Find the connected quote and change status to archived
+        if ($invoice->project && $invoice->project->quote) {
+            $invoice->project->quote->update([
+                'status' => 'archived'
+            ]);
+        }
 
         // Return success to the frontend
         return response()->json(['message' => 'Invoice marked as paid']);

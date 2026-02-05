@@ -3,7 +3,6 @@
 @section('title', 'Projects Details | Tanaman')
 
 @push('styles')
-
 <style>
     .gallery-viewport {
         width: 100%;
@@ -46,20 +45,37 @@
         padding-top: 20px;
         border-top: 1px solid #eee;
         display: flex;
-        justify-content: flex-end;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .footer-actions {
+        display: flex;
         gap: 10px;
+    }
+
+    .btn-cancel {
+        text-decoration: none; 
+        padding: 10px 15px; 
+        color: #64748b; 
+        border: 1px solid #cbd5e1; 
+        border-radius: 6px; 
+        background: white;
+        transition: all 0.2s;
+    }
+
+    .btn-cancel:hover {
+        background-color: #f1f5f9;
+        color: #475569;
     }
 
     .hidden {
         display: none !important;
     }
 </style>
-
 @endpush
 
 @section('content')
-
-
 
 @if (session('success'))
 <script>
@@ -86,12 +102,15 @@
                 <p class="sub-header">{{ $project->client->name }}</p>
             </div>
             <div class="project-title-right">
-                <span class="header-badge active">Active</span>
+                @if($project->is_active)
+                    <span class="header-badge active">Active</span>
+                @else
+                    <span class="header-badge" style="background-color: #059669; color: white;">Completed</span>
+                @endif
             </div>
         </div>
     </div>
 </div>
-
 
 <div class="project-detail-container">
     <aside class="project-detail-left">
@@ -101,10 +120,6 @@
                 <h3>PROJECT INFO</h3>
             </div>
             <div class="card-content">
-                <!-- <div class="info-section">
-                    <label>DESCRIPTION</label>
-                    <p>This is the description area</p>
-                </div> -->
                 <div class="info-grid">
                     <div class="info-item">
                         <label>BUDGET</label>
@@ -133,90 +148,85 @@
         </div>
     </aside>
     
+    <div class="stat-card" style="display: block;">
+        <form action="{{ route('projects.upload', $project->id) }}" method="POST" enctype="multipart/form-data" id="uploadForm">
+            @csrf
 
+            <div class="gallery-header">
+                <h3 class="panel-section-title">
+                    <i class="fas fa-camera-retro" style="color: #319B72; margin-right:5px;"></i>
+                    Progression Gallery
+                </h3>
 
-
-<div class="stat-card" style="display: block;">
-
-    <form action="{{ route('projects.upload', $project->id) }}" method="POST" enctype="multipart/form-data" id="uploadForm">
-        @csrf
-
-        <div class="gallery-header">
-            <h3 class="panel-section-title">
-                <i class="fas fa-camera-retro" style="color: #319B72; margin-right:5px;"></i>
-                Progression Gallery
-            </h3>
-
-            <button type="button" class="btn-primary" id="triggerUploadBtn">
-                <i class="fas fa-cloud-upload-alt"></i> Upload Photo
-            </button>
-
-            <input type="file" name="progression_images[]" id="fileInput" multiple style="display: none;">
-        </div>
-
-        @if(count($signedImages) > 0)
-        <div class="gallery-viewport" id="galleryViewport" data-images="{{ json_encode($signedImages) }}">
-
-            <img src="{{ $signedImages[0] }}" alt="Project Image" id="mainGalleryImage">
-
-            @if(count($signedImages) > 1)
-            <div style="position: absolute; top: 50%; width: 100%; display: flex; justify-content: space-between; padding: 0 10px; transform: translateY(-50%);">
-
-                <button type="button" id="prevBtn" style="background: rgba(0,0,0,0.5); border: none; color: white; padding: 10px; border-radius: 50%; cursor: pointer; z-index: 10;">
-                    <i class="fas fa-chevron-left"></i>
+                @if($project->is_active)
+                <button type="button" class="btn-primary" id="triggerUploadBtn">
+                    <i class="fas fa-cloud-upload-alt"></i> Upload Photo
                 </button>
+                @endif
 
-                <button type="button" id="nextBtn" style="background: rgba(0,0,0,0.5); border: none; color: white; padding: 10px; border-radius: 50%; cursor: pointer; z-index: 10;">
-                    <i class="fas fa-chevron-right"></i>
-                </button>
+                <input type="file" name="progression_images[]" id="fileInput" multiple style="display: none;">
+            </div>
+
+            @if(count($signedImages) > 0)
+            <div class="gallery-viewport" id="galleryViewport" data-images="{{ json_encode($signedImages) }}">
+                <img src="{{ $signedImages[0] }}" alt="Project Image" id="mainGalleryImage">
+                @if(count($signedImages) > 1)
+                <div style="position: absolute; top: 50%; width: 100%; display: flex; justify-content: space-between; padding: 0 10px; transform: translateY(-50%);">
+                    <button type="button" id="prevBtn" style="background: rgba(0,0,0,0.5); border: none; color: white; padding: 10px; border-radius: 50%; cursor: pointer; z-index: 10;">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <button type="button" id="nextBtn" style="background: rgba(0,0,0,0.5); border: none; color: white; padding: 10px; border-radius: 50%; cursor: pointer; z-index: 10;">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+                @endif
+                <div id="previewMsg" class="hidden" style="position: absolute; inset:0; background:white; display:flex; align-items:center; justify-content:center; color:#666;">
+                    Preview not available. Click "Save Photos" to upload.
+                </div>
+            </div>
+            <div id="imageCounter" style="text-align: center; color: #6b7280; font-size: 0.9rem; margin-bottom: 15px;">
+                Image 1 of {{ count($signedImages) }}
+            </div>
+            @else
+            <div class="drop-zone-static" id="dropZone">
+                <i class="far fa-image" style="font-size: 3rem; color: #cbd5e1; margin-bottom: 15px;"></i>
+                <p style="font-weight: 600; color: #475569; margin-bottom: 5px;">No progression photos uploaded yet</p>
+                <p style="font-size: 0.9rem;">Click "Upload Photo" above</p>
             </div>
             @endif
 
-            <div id="previewMsg" class="hidden" style="position: absolute; inset:0; background:white; display:flex; align-items:center; justify-content:center; color:#666;">
-                Preview not available. Click "Save Photos" to upload.
+            <div id="stagedFileMsg" class="hidden" style="margin-top: 15px; padding: 10px; background-color: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; border-radius: 6px; text-align: center;">
+                <i class="fas fa-check-circle"></i> <span id="fileCount">0</span> file(s) selected. Click "Save Photos" to confirm.
             </div>
-        </div>
-        <div id="imageCounter" style="text-align: center; color: #6b7280; font-size: 0.9rem; margin-bottom: 15px;">
-            Image 1 of {{ count($signedImages) }}
-        </div>
 
-        @else
-        <div class="drop-zone-static" id="dropZone">
-            <i class="far fa-image" style="font-size: 3rem; color: #cbd5e1; margin-bottom: 15px;"></i>
-            <p style="font-weight: 600; color: #475569; margin-bottom: 5px;">No progression photos uploaded yet</p>
-            <p style="font-size: 0.9rem;">Click "Upload Photo" above</p>
-        </div>
-        @endif
-
-        <div id="stagedFileMsg" class="hidden" style="margin-top: 15px; padding: 10px; background-color: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; border-radius: 6px; text-align: center;">
-            <i class="fas fa-check-circle"></i> <span id="fileCount">0</span> file(s) selected. Click "Save Photos" to confirm.
-        </div>
-
-        <div class="gallery-footer">
-            <a href="#" class="btn-cancel" style="text-decoration: none; padding: 10px 15px; color: #64748b;">Back</a>
-            <!-- 
-                            <button type="button" class="btn-primary" style="background-color: #3b82f6;">
-                                <i class="fas fa-check"></i> Approved
-                            </button> -->
-
-            <button type="submit" id="saveBtn" class="btn-primary" disabled style="opacity: 0.6; cursor: not-allowed;">
-                <i class="fas fa-save"></i> Save Photos
-            </button>
-        </div>
-    </form>
-
+            <div class="gallery-footer">
+                <a href="{{ route('projects') }}" class="btn-cancel">Back</a>
+                
+                <div class="footer-actions">
+                    @if($project->is_active) 
+                        <button type="button" id="markCompletedBtn" class="btn-primary" style="background-color: #059669;">
+                            <i class="fas fa-check"></i> Mark as Completed
+                        </button>
+                        
+                        <button type="submit" id="saveBtn" class="btn-primary" disabled style="opacity: 0.6; cursor: not-allowed;">
+                            <i class="fas fa-save"></i> Save Photos
+                        </button>
+                    @else
+                        <span style="color: #059669; font-weight: bold; padding: 10px; display: flex; align-items: center;">
+                            <i class="fas fa-check-circle" style="margin-right: 5px;"></i> Project Completed
+                        </span>
+                    @endif
+                </div>
+            </div>
+        </form>
+    </div>
 </div>
 
-</div>
-
-</div>
 @endsection
 
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-
-        // --- 1. Navbar Logic ---
         const profileTrigger = document.getElementById('profile-trigger');
         const dropdownMenu = document.getElementById('profile-dropdown');
         if (profileTrigger) {
@@ -231,7 +241,6 @@
             });
         }
 
-        // --- 2. Carousel Logic (No Red Lines) ---
         const mainImage = document.getElementById('mainGalleryImage');
         const prevBtn = document.getElementById('prevBtn');
         const nextBtn = document.getElementById('nextBtn');
@@ -241,45 +250,35 @@
         let galleryImages = [];
         let currentIndex = 0;
 
-        // Load data from HTML attribute safely
         if (viewport && viewport.dataset.images) {
             try {
                 galleryImages = JSON.parse(viewport.dataset.images);
             } catch (e) {
-                console.error("Error parsing gallery images:", e);
+                console.error(e);
             }
         }
 
-        // Only initialize if we have images and buttons
         if (galleryImages.length > 1 && mainImage && prevBtn && nextBtn) {
-
             function updateGallery() {
                 mainImage.src = galleryImages[currentIndex];
                 if (counter) {
                     counter.innerText = `Image ${currentIndex + 1} of ${galleryImages.length}`;
                 }
             }
-
             nextBtn.addEventListener('click', function(e) {
                 e.preventDefault();
                 currentIndex++;
-                if (currentIndex >= galleryImages.length) {
-                    currentIndex = 0;
-                }
+                if (currentIndex >= galleryImages.length) currentIndex = 0;
                 updateGallery();
             });
-
             prevBtn.addEventListener('click', function(e) {
                 e.preventDefault();
                 currentIndex--;
-                if (currentIndex < 0) {
-                    currentIndex = galleryImages.length - 1;
-                }
+                if (currentIndex < 0) currentIndex = galleryImages.length - 1;
                 updateGallery();
             });
         }
 
-        // --- 3. Upload Logic ---
         const fileInput = document.getElementById('fileInput');
         const triggerBtn = document.getElementById('triggerUploadBtn');
         const saveBtn = document.getElementById('saveBtn');
@@ -306,9 +305,7 @@
                     if (dropZone) {
                         dropZone.innerHTML = '<i class="fas fa-check" style="font-size: 3rem; color: #319B72; margin-bottom: 15px;"></i><p style="font-weight:600; color:#166534;">Files Selected</p>';
                     }
-                    if (previewMsg) {
-                        previewMsg.classList.remove('hidden');
-                    }
+                    if (previewMsg) previewMsg.classList.remove('hidden');
                 } else {
                     stagedMsg.classList.add('hidden');
                     saveBtn.disabled = true;
@@ -316,6 +313,55 @@
                     saveBtn.style.cursor = 'not-allowed';
                     if (previewMsg) previewMsg.classList.add('hidden');
                 }
+            });
+        }
+
+        const markCompletedBtn = document.getElementById('markCompletedBtn');
+        if (markCompletedBtn) {
+            markCompletedBtn.addEventListener('click', function() {
+                Swal.fire({
+                    title: 'Complete Project?',
+                    text: "This will mark the project as finished. Ensure all photos are uploaded first.",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#059669',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Yes, Complete it!'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        fetch(`/projects/{{ $project->id }}/complete`, {
+                            method: 'PATCH',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                'Accept': 'application/json'
+                            }
+                        })
+                        .then(async response => {
+                            const data = await response.json();
+                            if (!response.ok) {
+                                const error = new Error(data.message || 'Something went wrong');
+                                error.status = response.status;
+                                throw error;
+                            }
+                            return data;
+                        })
+                        .then(data => {
+                            Swal.fire('Completed!', data.message, 'success')
+                                .then(() => {
+                                    window.location.href = data.redirect;
+                                });
+                        })
+                        .catch(error => {
+                            let title = 'Error!';
+                            let msg = error.message;
+                            if (error.status === 422) {
+                                title = 'Cannot Complete';
+                            }
+                            Swal.fire({ icon: 'error', title: title, text: msg });
+                        });
+                    }
+                });
             });
         }
     });

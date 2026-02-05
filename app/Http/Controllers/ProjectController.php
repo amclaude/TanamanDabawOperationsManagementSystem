@@ -199,4 +199,27 @@ class ProjectController extends Controller
             'items'       => $items
         ]);
     }
+
+    public function complete(string $id)
+    {
+        // Load the project with the images count
+        $project = Project::withCount('images')->findOrFail($id);
+
+        // Check if the project has at least one image
+        if ($project->images_count === 0) {
+            return response()->json([
+                'message' => 'Cannot complete project: At least one project image is required.'
+            ], 422);
+        }
+
+        // Update the status
+        $project->update([
+            'is_active' => false
+        ]);
+
+        return response()->json([
+            'message' => 'Project marked as completed successfully',
+            'redirect' => route('projects')
+        ], 200);
+    }
 }

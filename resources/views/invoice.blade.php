@@ -4,28 +4,140 @@
 
 @section('content')
 
-{{-- Page Styles --}}
 <style>
-    /* Status badge colors */
-    .status-badge { padding: 4px 10px; border-radius: 20px; font-size: 0.85em; font-weight: 600; text-transform: capitalize; }
-    .status-badge.draft { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+    /* --- Status Badges --- */
+    .status-badge {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        display: inline-block;
+        text-align: center;
+        min-width: 80px;
+    }
+    .status-badge.draft { background: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; }
     .status-badge.sent { background: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd; }
     .status-badge.paid { background: #dcfce7; color: #16a34a; border: 1px solid #bbf7d0; }
     .status-badge.overdue { background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; }
 
-    /* Modal overlay and box */
-    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 1000; justify-content: center; align-items: center; }
-    .modal-box { background: white; width: 700px; padding: 25px; border-radius: 8px; max-height: 90vh; overflow-y: auto; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); scrollbar-width: none; -ms-overflow-style: none; }
+    /* --- Actions Column --- */
+    .actions-cell {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        justify-content: flex-end; 
+        width: 100%;
+    }
+
+    /* --- Buttons --- */
+    .btn-icon {
+        width: 34px;
+        height: 34px;
+        border-radius: 6px;
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .btn-icon:hover { transform: translateY(-1px); }
+    .btn-send { background: #3b82f6; color: white; }
+    .btn-send:hover { background: #2563eb; }
+    .btn-pay { background: #10b981; color: white; }
+    .btn-pay:hover { background: #059669; }
+    
+    .btn-menu-trigger {
+        background: #f3f4f6;
+        color: #4b5563;
+    }
+    .btn-menu-trigger:hover, .btn-menu-trigger.active {
+        background: #e5e7eb;
+        color: #1f2937;
+    }
+
+    /* --- Floating Dropdown Menu --- */
+    .action-menu {
+        display: none;
+        position: fixed; 
+        background: white;
+        min-width: 160px;
+        border-radius: 8px;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e5e7eb;
+        z-index: 9999;
+        padding: 5px;
+        flex-direction: column;
+    }
+    
+    .action-menu.show { display: flex; }
+
+    .menu-item-btn {
+        width: 100%;
+        text-align: left;
+        padding: 10px 12px;
+        background: none;
+        border: none;
+        font-size: 0.9rem;
+        color: #4b5563;
+        cursor: pointer;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: background 0.1s;
+    }
+    .menu-item-btn:hover { background-color: #f9fafb; color: #111827; }
+    .menu-item-btn.text-danger { color: #ef4444; }
+    .menu-item-btn.text-danger:hover { background-color: #fef2f2; }
+
+    /* --- Modal Styles --- */
+    .modal-overlay { 
+        display: none; 
+        position: fixed; 
+        top: 0; left: 0; width: 100%; height: 100%; 
+        background: rgba(0, 0, 0, 0.5); 
+        z-index: 1000; 
+        justify-content: center; align-items: center; 
+    }
+    
+    .modal-box { 
+        background: white; 
+        width: 700px; 
+        padding: 25px; 
+        border-radius: 8px; 
+        max-height: 90vh; 
+        overflow-y: auto; 
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
     .modal-box::-webkit-scrollbar { display: none; }
 
-    /* Line item styling */
     .item-row { display: flex; gap: 10px; margin-bottom: 8px; align-items: center; }
     .modal-section-title { font-weight: 600; color: #334155; margin-bottom: 10px; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; margin-top: 15px; }
+    
+    /* Buttons */
+    .btn-save { background-color: #319B72; color: white; padding: 8px 20px; border: none; border-radius: 6px; cursor: pointer; }
+    .btn-cancel { background: transparent; border: 1px solid #cbd5e1; color: #64748b; padding: 8px 20px; border-radius: 6px; cursor: pointer; margin-right: 10px; }
 
-    /* Action buttons */
-    .btn-paid { background-color: #10b981; color: white; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; transition: 0.2s; }
-    .btn-paid:hover { background-color: #059669; }
-    .btn-paid:disabled { background-color: #cbd5e1; cursor: not-allowed; }
+    /* --- VIEW MODE STYLES --- */
+    .view-mode-active .btn-save, 
+    .view-mode-active #addItemBtn, 
+    .view-mode-active .remove-btn {
+        display: none !important;
+    }
+    
+    .view-mode-active input, 
+    .view-mode-active select {
+        background-color: #f9fafb;
+        color: #6b7280;
+        border-color: #e5e7eb;
+        pointer-events: none;
+    }
 </style>
 
 <div class="page-header">
@@ -39,7 +151,7 @@
             <input type="text" id="searchInput" placeholder="Search invoices..." style="padding: 10px 10px 10px 35px; border: 1px solid #ddd; border-radius: 6px; outline: none; width: 250px;">
             <i class="fas fa-search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #64748b;"></i>
         </div>
-        <button class="btn-primary" id="addInvoiceBtn">
+        <button class="btn-primary" id="addInvoiceBtn" style="background-color: #319B72; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer;">
             <i class="fas fa-plus"></i> Create Invoice
         </button>
     </div>
@@ -54,7 +166,7 @@
                 <th>Created</th>
                 <th>Due Date</th>
                 <th>Status</th>
-                <th>Actions</th>
+                <th style="text-align: right;">Actions</th>
             </tr>
         </thead>
         <tbody id="invoiceTableBody">
@@ -71,54 +183,75 @@
                     <span class="status-badge {{ $invoice->status }}">{{ ucfirst($invoice->status) }}</span>
                 </td>
                 <td>
-                    <div style="display: flex; gap: 6px;">
-                        {{-- Send Email --}}
-                        <button class="btn-action send-email-btn" 
-                            data-id="{{ $invoice->id }}" 
-                            data-email="{{ $invoice->client->email ?? '' }}"
-                            title="Send to Client"
-                            style="background-color:#3b82f6; color:white; border:none; padding:6px 10px; border-radius:6px; cursor:pointer;">
-                            <i class="fas fa-paper-plane"></i>
-                        </button>
-
-                        @if($invoice->status !== 'paid')
-                            {{-- Mark Paid --}}
-                            <button class="btn-action mark-paid-btn" 
-                                data-id="{{ $invoice->id }}" 
-                                title="Mark as Paid"
-                                style="background-color:#10b981; color:white; border:none; padding:6px 10px; border-radius:6px; cursor:pointer;">
-                                <i class="fas fa-check-circle"></i>
-                            </button>
-
-                            {{-- Edit --}}
-                            <button class="btn-action edit-btn" 
+                    <div class="actions-cell">
+                        {{-- Primary Actions --}}
+                        @if($invoice->status === 'draft')
+                            <button class="btn-icon btn-send send-email-btn"
                                 data-id="{{ $invoice->id }}"
-                                data-json="{{ json_encode($invoice->load(['items', 'project'])) }}" 
-                                title="Edit Invoice"
-                                style="background-color:#64748b; color:white; border:none; padding:6px 10px; border-radius:6px; cursor:pointer;">
-                                <i class="fas fa-edit"></i>
+                                data-email="{{ $invoice->client->email ?? '' }}"
+                                title="Send to Client">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        @elseif($invoice->status === 'sent')
+                            <button class="btn-icon btn-pay mark-paid-btn"
+                                data-id="{{ $invoice->id }}"
+                                title="Mark as Paid">
+                                <i class="fas fa-check"></i>
                             </button>
                         @endif
 
-                        {{-- Delete --}}
-                        <button class="btn-action delete-btn" 
-                            data-id="{{ $invoice->id }}" 
-                            title="Delete Invoice"
-                            style="background-color:#ef4444; color:white; border:none; padding:6px 10px; border-radius:6px; cursor:pointer;">
-                            <i class="fas fa-trash-alt"></i>
+                        {{-- Menu Trigger --}}
+                        <button class="btn-icon btn-menu-trigger" type="button" style="margin-left: 6px;">
+                            <i class="fas fa-ellipsis-v"></i>
                         </button>
+
+                        {{-- Dropdown Menu --}}
+                        <div class="action-menu">
+                            
+                            {{-- View/Edit Logic --}}
+                            @if($invoice->status === 'paid')
+                                <button class="menu-item-btn view-btn"
+                                    data-id="{{ $invoice->id }}"
+                                    data-json="{{ json_encode($invoice->load(['items', 'project'])) }}">
+                                    <i class="fas fa-eye" style="color: #3b82f6;"></i> View Details
+                                </button>
+                            @else
+                                <button class="menu-item-btn edit-btn"
+                                    data-id="{{ $invoice->id }}"
+                                    data-json="{{ json_encode($invoice->load(['items', 'project'])) }}">
+                                    <i class="fas fa-edit" style="color: #3b82f6;"></i> Edit Details
+                                </button>
+                            @endif
+
+                            {{-- Mark Paid: ONLY if Sent --}}
+                            @if($invoice->status === 'sent')
+                                <button class="menu-item-btn mark-paid-btn" data-id="{{ $invoice->id }}">
+                                    <i class="fas fa-check-circle" style="color: #10b981;"></i> Mark as Paid
+                                </button>
+                            @endif
+
+                            {{-- Delete: Show if NOT Paid --}}
+                            @if($invoice->status !== 'paid')
+                                <div style="border-top: 1px solid #f3f4f6; margin: 4px 0;"></div>
+                                <button class="menu-item-btn delete-btn text-danger" data-id="{{ $invoice->id }}">
+                                    <i class="fas fa-trash-alt"></i> Delete Invoice
+                                </button>
+                            @endif
+
+                        </div>
                     </div>
                 </td>
             </tr>
             @empty
             <tr>
-                <td colspan="7" style="text-align: center; padding: 30px; color: #64748b;">No invoices found.</td>
+                <td colspan="6" style="text-align: center; padding: 30px; color: #64748b;">No invoices found.</td>
             </tr>
             @endforelse
         </tbody>
     </table>
 </div>
 
+{{-- MODAL --}}
 <div class="modal-overlay" id="invoiceModal">
     <div class="modal-box">
         <div class="modal-header" style="display:flex; justify-content:space-between; margin-bottom:15px;">
@@ -127,7 +260,6 @@
         </div>
 
         <form id="createInvoiceForm">
-            {{-- Hidden ID for Update logic --}}
             <input type="hidden" id="invoiceId">
 
             <div class="input-group">
@@ -187,7 +319,58 @@
 <script>
     document.addEventListener('DOMContentLoaded', () => {
 
-        // DOM elements
+        // --- DROPDOWN LOGIC ---
+        document.querySelectorAll('.btn-menu-trigger').forEach(trigger => {
+            trigger.addEventListener('click', function(e) {
+                e.stopPropagation();
+                
+                document.querySelectorAll('.action-menu.show').forEach(menu => {
+                    if (menu !== this.nextElementSibling) {
+                        menu.classList.remove('show');
+                        menu.previousElementSibling.classList.remove('active');
+                    }
+                });
+
+                const menu = this.nextElementSibling;
+                const isAlreadyOpen = menu.classList.contains('show');
+
+                if (!isAlreadyOpen) {
+                    this.classList.add('active');
+                    menu.classList.add('show');
+                    
+                    const rect = this.getBoundingClientRect();
+                    const menuHeight = 160; 
+                    const spaceBelow = window.innerHeight - rect.bottom;
+                    
+                    let rightPos = window.innerWidth - rect.right;
+                    menu.style.right = rightPos + 'px';
+                    menu.style.left = 'auto';
+
+                    if (spaceBelow < menuHeight) {
+                        menu.style.top = 'auto';
+                        menu.style.bottom = (window.innerHeight - rect.top + 5) + 'px';
+                    } else {
+                        menu.style.bottom = 'auto';
+                        menu.style.top = (rect.bottom + 5) + 'px';
+                    }
+                } else {
+                     menu.classList.remove('show');
+                     this.classList.remove('active');
+                }
+            });
+        });
+
+        window.addEventListener('scroll', () => {
+             document.querySelectorAll('.action-menu.show').forEach(m => m.classList.remove('show'));
+             document.querySelectorAll('.btn-menu-trigger').forEach(b => b.classList.remove('active'));
+        }, true);
+
+        window.addEventListener('click', () => {
+             document.querySelectorAll('.action-menu.show').forEach(m => m.classList.remove('show'));
+             document.querySelectorAll('.btn-menu-trigger').forEach(b => b.classList.remove('active'));
+        });
+
+        // --- MODAL & FORM LOGIC ---
         const modal = document.getElementById('invoiceModal');
         const modalTitle = document.getElementById('modalTitle');
         const openBtn = document.getElementById('addInvoiceBtn');
@@ -206,11 +389,7 @@
 
         let isEditMode = false;
 
-        // Modal handlers
-        const openModal = () => {
-            modal.style.display = 'flex';
-        };
-        const closeModal = () => {
+        const resetModalState = () => {
             modal.style.display = 'none';
             form.reset();
             itemsContainer.innerHTML = '';
@@ -218,36 +397,42 @@
             totalDisplay.innerText = '₱0.00';
             isEditMode = false;
             invoiceIdInput.value = '';
+            
+            form.classList.remove('view-mode-active');
+            
+            form.querySelectorAll('input, select').forEach(el => {
+                el.disabled = false;
+            });
+            
+            cancelBtn.innerText = "Cancel";
         };
+
+        const openModal = () => { modal.style.display = 'flex'; };
 
         if (openBtn) {
             openBtn.addEventListener('click', () => {
-                isEditMode = false;
+                resetModalState();
                 modalTitle.innerText = "Create New Invoice";
                 saveBtn.innerText = "Create Invoice";
-                
                 const today = new Date().toISOString().split('T')[0];
                 document.getElementById('issueDate').value = today;
-                
-                // Default due date: +15 days
-                const due = new Date(); due.setDate(due.getDate() + 15);
+                const due = new Date();
+                due.setDate(due.getDate() + 15);
                 document.getElementById('dueDate').value = due.toISOString().split('T')[0];
-                
                 openModal();
             });
         }
 
-        if (closeBtn) closeBtn.addEventListener('click', closeModal);
-        if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
+        if (closeBtn) closeBtn.addEventListener('click', resetModalState);
+        if (cancelBtn) cancelBtn.addEventListener('click', resetModalState);
 
-        // Fetch project details (Client & Items)
         if (projectSelect) {
             projectSelect.addEventListener('change', async function() {
                 const projectId = this.value;
                 const option = this.options[this.selectedIndex];
-                
+
                 if (!projectId) {
-                    if(!isEditMode) {
+                    if (!isEditMode) {
                         itemsContainer.innerHTML = '';
                         itemsContainer.appendChild(emptyStateMsg);
                         clientDisplay.value = '';
@@ -255,44 +440,32 @@
                     }
                     return;
                 }
-
-                // Populate client info from data attributes
                 if (option.dataset.clientId) {
                     clientIdInput.value = option.dataset.clientId;
                     clientDisplay.value = option.dataset.clientName;
                 }
+                if (isEditMode) return;
 
-                // Skip default item loading if we are editing an existing invoice
-                if(isEditMode) return; 
-
-                itemsContainer.innerHTML = '<div style="color:#64748b; padding:10px; text-align:center;"><i class="fas fa-spinner fa-spin"></i> Loading project details...</div>';
+                itemsContainer.innerHTML = '<div style="color:#64748b; padding:10px; text-align:center;">Loading...</div>';
 
                 try {
                     const response = await fetch(`/projects/${projectId}/invoice-data`);
                     const data = await response.json();
-
-                    itemsContainer.innerHTML = ''; 
+                    itemsContainer.innerHTML = '';
                     if (data.items && data.items.length > 0) {
-                        data.items.forEach(item => {
-                            createRow(item.description, item.quantity, item.price);
-                        });
+                        data.items.forEach(item => createRow(item.description, item.quantity, item.price));
                     } else {
-                        createRow('Consultation Service', 1, 0); 
+                        createRow('Consultation Service', 1, 0);
                     }
                     calculateTotal();
                 } catch (error) {
-                    console.error("Fetch error:", error);
-                    itemsContainer.innerHTML = '<div style="color:#ef4444; padding:10px;">Error loading project data. Please try again.</div>';
+                    itemsContainer.innerHTML = 'Error loading project data.';
                 }
             });
         }
 
-        // Line item management
         function createRow(desc = '', qty = 1, price = 0) {
-            if(document.getElementById('emptyStateMsg')) {
-                document.getElementById('emptyStateMsg').remove();
-            }
-
+            if (document.getElementById('emptyStateMsg')) document.getElementById('emptyStateMsg').remove();
             const div = document.createElement('div');
             div.classList.add('item-row');
             div.innerHTML = `
@@ -319,43 +492,198 @@
             totalDisplay.innerText = '₱' + total.toLocaleString('en-US', { minimumFractionDigits: 2 });
         }
 
-        // Handle edit button click
-        document.querySelectorAll('.edit-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
+        // --- DELEGATED EVENTS ---
+
+        // Edit
+        document.addEventListener('click', function(e) {
+            if(e.target.closest('.edit-btn')) {
+                resetModalState();
+                const btn = e.target.closest('.edit-btn');
                 isEditMode = true;
-                const invoiceData = JSON.parse(this.getAttribute('data-json'));
-                const invoiceId = this.getAttribute('data-id');
+                const invoiceData = JSON.parse(btn.getAttribute('data-json'));
+                const invoiceId = btn.getAttribute('data-id');
 
                 modalTitle.innerText = "Edit Invoice";
                 saveBtn.innerText = "Update Invoice";
                 invoiceIdInput.value = invoiceId;
-
-                // Set initial form values
                 projectSelect.value = invoiceData.project_id;
                 clientIdInput.value = invoiceData.client_id;
                 clientDisplay.value = invoiceData.client ? invoiceData.client.name : 'Unknown';
-                
                 document.getElementById('issueDate').value = invoiceData.issue_date;
                 document.getElementById('dueDate').value = invoiceData.due_date;
 
-                // Populate existing items
                 itemsContainer.innerHTML = '';
-                if(invoiceData.items && invoiceData.items.length > 0) {
-                    invoiceData.items.forEach(item => {
-                        createRow(item.description, item.quantity, item.price);
-                    });
+                if (invoiceData.items && invoiceData.items.length > 0) {
+                    invoiceData.items.forEach(item => createRow(item.description, item.quantity, item.price));
                 } else {
                     createRow();
                 }
-
                 openModal();
                 calculateTotal();
-            });
+            }
         });
 
-        // Form submission
+        // View
+        document.addEventListener('click', function(e) {
+            if(e.target.closest('.view-btn')) {
+                resetModalState();
+                const btn = e.target.closest('.view-btn');
+                const invoiceData = JSON.parse(btn.getAttribute('data-json'));
+
+                modalTitle.innerText = "Invoice Details (Paid)";
+                form.classList.add('view-mode-active');
+                cancelBtn.innerText = "Close";
+
+                projectSelect.value = invoiceData.project_id;
+                clientIdInput.value = invoiceData.client_id;
+                clientDisplay.value = invoiceData.client ? invoiceData.client.name : 'Unknown';
+                document.getElementById('issueDate').value = invoiceData.issue_date;
+                document.getElementById('dueDate').value = invoiceData.due_date;
+
+                form.querySelectorAll('input, select').forEach(el => el.disabled = true);
+
+                itemsContainer.innerHTML = '';
+                if (invoiceData.items && invoiceData.items.length > 0) {
+                    invoiceData.items.forEach(item => createRow(item.description, item.quantity, item.price));
+                }
+                
+                itemsContainer.querySelectorAll('input').forEach(el => el.disabled = true);
+                openModal();
+                calculateTotal();
+            }
+        });
+
+        // Mark Paid
+        document.addEventListener('click', function(e) {
+            if(e.target.closest('.mark-paid-btn')) {
+                const btn = e.target.closest('.mark-paid-btn');
+                const invoiceId = btn.getAttribute('data-id');
+                Swal.fire({
+                    title: 'Mark as Paid?',
+                    text: "This will update the invoice status to Paid. This action cannot be undone.",
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#10b981',
+                    cancelButtonColor: '#64748b',
+                    confirmButtonText: 'Yes, Mark Paid!'
+                }).then(async (result) => {
+                    if (result.isConfirmed) {
+                        try {
+                            const response = await fetch(`/invoices/${invoiceId}/pay`, {
+                                method: 'PUT',
+                                headers: { 'X-CSRF-TOKEN': "{{ csrf_token() }}", 'Accept': 'application/json' }
+                            });
+                            if (response.ok) {
+                                // Auto-reload on success
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Paid!',
+                                    text: 'Invoice marked as paid.',
+                                    timer: 1500,
+                                    showConfirmButton: false
+                                }).then(() => window.location.reload());
+                            } else {
+                                Swal.fire('Error', 'Could not update invoice.', 'error');
+                            }
+                        } catch (error) {
+                            Swal.fire('Error', 'System error occurred.', 'error');
+                        }
+                    }
+                });
+            }
+        });
+
+        // Send Email
+        document.addEventListener('click', function(e) {
+            if(e.target.closest('.send-email-btn')) {
+                const btn = e.target.closest('.send-email-btn');
+                const invoiceId = btn.getAttribute('data-id');
+                const clientEmail = btn.getAttribute('data-email');
+                if (!clientEmail) {
+                    Swal.fire('Error', 'This client does not have an email address linked.', 'error');
+                    return;
+                }
+                Swal.fire({
+                    title: 'Send Invoice?',
+                    text: `Send this invoice to ${clientEmail}?`,
+                    icon: 'info',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3b82f6',
+                    cancelButtonColor: '#64748b',
+                    confirmButtonText: 'Yes, Send it!'
+                }).then(async (result) => {
+                    if (result.isConfirmed) {
+                        Swal.fire({ title: 'Sending...', didOpen: () => Swal.showLoading() });
+                        try {
+                            const response = await fetch(`/invoices/${invoiceId}/send`, {
+                                method: 'POST',
+                                headers: { 'X-CSRF-TOKEN': "{{ csrf_token() }}", 'Accept': 'application/json' }
+                            });
+                            if (response.ok) {
+                                // Auto-reload on success
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Sent!',
+                                    text: 'The invoice has been emailed successfully.',
+                                    timer: 1500,
+                                    showConfirmButton: false
+                                }).then(() => window.location.reload());
+                            } else {
+                                Swal.fire('Error', 'Could not send email.', 'error');
+                            }
+                        } catch (error) {
+                            Swal.fire('Error', 'System error occurred.', 'error');
+                        }
+                    }
+                });
+            }
+        });
+
+        // Delete
+        document.addEventListener('click', function(e) {
+            if(e.target.closest('.delete-btn')) {
+                const btn = e.target.closest('.delete-btn');
+                const id = btn.getAttribute('data-id');
+                Swal.fire({
+                    title: 'Delete Invoice?',
+                    text: "You won't be able to revert this!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#64748b',
+                    confirmButtonText: 'Yes, delete it!'
+                }).then(async (result) => {
+                    if (result.isConfirmed) {
+                        try {
+                            const response = await fetch(`/invoices/${id}`, {
+                                method: 'DELETE',
+                                headers: { 'X-CSRF-TOKEN': "{{ csrf_token() }}", 'Accept': 'application/json' }
+                            });
+                            if (response.ok) {
+                                // Auto-reload on success
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Deleted!',
+                                    text: 'Invoice has been deleted.',
+                                    timer: 1500,
+                                    showConfirmButton: false
+                                }).then(() => window.location.reload());
+                            } else {
+                                Swal.fire('Error', 'Could not delete invoice.', 'error');
+                            }
+                        } catch (error) {
+                            Swal.fire('Error', 'System error occurred.', 'error');
+                        }
+                    }
+                });
+            }
+        });
+
+        // Form Submit
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
+            if(form.classList.contains('view-mode-active')) return;
+
             const originalText = saveBtn.innerText;
             saveBtn.innerText = 'Processing...';
             saveBtn.disabled = true;
@@ -384,10 +712,8 @@
                 items: items
             };
 
-            // Set route and method based on mode
             let url = "{{ route('invoices.store') }}";
             let method = "POST";
-
             if (isEditMode && invoiceIdInput.value) {
                 url = `/invoices/${invoiceIdInput.value}`;
                 method = "PUT";
@@ -399,15 +725,14 @@
                     headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': "{{ csrf_token() }}", 'Accept': 'application/json' },
                     body: JSON.stringify(payload)
                 });
-
                 if (response.ok) {
-                    closeModal();
-                    Swal.fire({ 
-                        title: 'Success!', 
-                        text: isEditMode ? 'Invoice updated successfully.' : 'Invoice created successfully.', 
-                        icon: 'success', 
-                        timer: 1500, 
-                        showConfirmButton: false 
+                    resetModalState();
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success!',
+                        text: isEditMode ? 'Invoice updated.' : 'Invoice created.',
+                        timer: 1500,
+                        showConfirmButton: false
                     }).then(() => window.location.reload());
                 } else {
                     const result = await response.json();
@@ -416,144 +741,13 @@
                     saveBtn.disabled = false;
                 }
             } catch (e) {
-                console.error(e);
                 Swal.fire('Error', 'System error occurred.', 'error');
                 saveBtn.innerText = originalText;
                 saveBtn.disabled = false;
             }
         });
 
-        // Mark as paid handler
-        document.querySelectorAll('.mark-paid-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const invoiceId = this.getAttribute('data-id');
-                Swal.fire({
-                    title: 'Mark as Paid?',
-                    text: "This will update the invoice status to Paid. This action cannot be undone.",
-                    icon: 'question',
-                    showCancelButton: true,
-                    confirmButtonColor: '#10b981',
-                    cancelButtonColor: '#64748b',
-                    confirmButtonText: 'Yes, Mark Paid!'
-                }).then(async (result) => {
-                    if (result.isConfirmed) {
-                        try {
-                            const response = await fetch(`/invoices/${invoiceId}/pay`, {
-                                method: 'PUT',
-                                headers: { 'X-CSRF-TOKEN': "{{ csrf_token() }}", 'Accept': 'application/json' }
-                            });
-                            if (response.ok) {
-                                Swal.fire('Paid!', 'Invoice marked as paid.', 'success').then(() => window.location.reload());
-                            } else {
-                                Swal.fire('Error', 'Could not update invoice.', 'error');
-                            }
-                        } catch (error) {
-                            console.error(error);
-                            Swal.fire('Error', 'System error occurred.', 'error');
-                        }
-                    }
-                });
-            });
-        });
-
-        // Email handler
-        document.querySelectorAll('.send-email-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const invoiceId = this.getAttribute('data-id');
-                const clientEmail = this.getAttribute('data-email');
-
-                if (!clientEmail) {
-                    Swal.fire('Error', 'This client does not have an email address linked.', 'error');
-                    return;
-                }
-
-                Swal.fire({
-                    title: 'Send Invoice?',
-                    text: `Send this invoice to ${clientEmail}?`,
-                    icon: 'info',
-                    showCancelButton: true,
-                    confirmButtonColor: '#3b82f6',
-                    cancelButtonColor: '#64748b',
-                    confirmButtonText: 'Yes, Send it!'
-                }).then(async (result) => {
-                    if (result.isConfirmed) {
-                        Swal.fire({
-                            title: 'Sending...',
-                            text: 'Please wait while we email the client.',
-                            allowOutsideClick: false,
-                            didOpen: () => { Swal.showLoading(); }
-                        });
-
-                        try {
-                            const response = await fetch(`/invoices/${invoiceId}/send`, {
-                                method: 'POST',
-                                headers: {
-                                    'X-CSRF-TOKEN': "{{ csrf_token() }}",
-                                    'Accept': 'application/json'
-                                }
-                            });
-
-                            const data = await response.json();
-
-                            if (response.ok) {
-                                Swal.fire('Sent!', 'The invoice has been emailed successfully.', 'success')
-                                .then(() => window.location.reload());
-                            } else {
-                                Swal.fire('Error', data.message || 'Could not send email.', 'error');
-                            }
-                        } catch (error) {
-                            console.error(error);
-                            Swal.fire('Error', 'System error occurred.', 'error');
-                        }
-                    }
-                });
-            });
-        });
-
-        // Delete handler
-        document.querySelectorAll('.delete-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const id = this.getAttribute('data-id');
-                
-                Swal.fire({
-                    title: 'Delete Invoice?',
-                    text: "You won't be able to revert this!",
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#d33',
-                    cancelButtonColor: '#64748b',
-                    confirmButtonText: 'Yes, delete it!'
-                }).then(async (result) => {
-                    if (result.isConfirmed) {
-                        try {
-                            const response = await fetch(`/invoices/${id}`, {
-                                method: 'DELETE',
-                                headers: { 'X-CSRF-TOKEN': "{{ csrf_token() }}", 'Accept': 'application/json' }
-                            });
-
-                            if (response.ok) {
-                                Swal.fire({
-                                    title: 'Deleted!',
-                                    text: 'Invoice has been deleted.',
-                                    icon: 'success',
-                                    timer: 1500,
-                                    showConfirmButton: false
-                                }).then(() => {
-                                    window.location.reload();
-                                });
-                            } else {
-                                Swal.fire('Error', 'Could not delete invoice.', 'error');
-                            }
-                        } catch (error) {
-                            console.error(error);
-                            Swal.fire('Error', 'System error occurred.', 'error');
-                        }
-                    }
-                });
-            });
-        });
-
-        // Filter table rows
+        // Search
         const searchInput = document.getElementById('searchInput');
         const tableBody = document.getElementById('invoiceTableBody');
         if (searchInput && tableBody) {

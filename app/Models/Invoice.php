@@ -15,13 +15,13 @@ class Invoice extends Model
         'status'
     ];
 
-    // Relationship: An invoice has many items
+    // An invoice has many items
     public function items()
     {
         return $this->hasMany(InvoiceItem::class);
     }
 
-    // Relationship: An invoice belongs to a project
+    // An invoice belongs to a project
     public function project()
     {
         return $this->belongsTo(Project::class);

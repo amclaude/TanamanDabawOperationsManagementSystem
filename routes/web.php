@@ -70,6 +70,7 @@ Route::middleware(['auth', 'restrict.user'])->group(function () {
     Route::post('/projects', [ProjectController::class, 'create'])->name('projects.create');
     Route::put('projects/{id}', [ProjectController::class, 'update'])
         ->name('projects.update');
+    Route::patch('/projects/{id}/complete', [ProjectController::class, 'complete'])->name('projects.complete');
     Route::delete('projects/{id}', [ProjectController::class, 'destroy'])
         ->name('projects.destroy');
     Route::get('/projects/{id}', [ProjectController::class, 'show'])->name('projects.panel');
@@ -110,7 +111,6 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/invoices/{id}/pay', [App\Http\Controllers\InvoiceController::class, 'markAsPaid'])->name('invoices.pay');
     Route::post('/invoices/{id}/send', [App\Http\Controllers\InvoiceController::class, 'sendEmail'])->name('invoices.send');
     Route::get('/projects/{id}/invoice-data', [ProjectController::class, 'getInvoiceData']);
-
 });
 
 Route::middleware(['auth'])->group(function () {

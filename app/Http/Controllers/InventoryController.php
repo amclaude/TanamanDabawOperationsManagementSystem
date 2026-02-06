@@ -66,11 +66,7 @@ class InventoryController extends Controller
 
     public function update(Request $request, $id)
     {
-        $item = Inventory::find($id);
-
-        if (!$item) {
-            return response()->json(['message' => 'Item not found'], 404);
-        }
+        
 
         $validator = Validator::make($request->all(), [
             'name'        => 'sometimes|string|max:255',
@@ -82,6 +78,13 @@ class InventoryController extends Controller
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
+
+        $item = Inventory::find($id);
+
+        if (!$item) {
+            return response()->json(['message' => 'Item not found'], 404);
+        }
+
 
         $item->update($request->all());
 

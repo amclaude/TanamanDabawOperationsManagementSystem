@@ -41,7 +41,7 @@ class ProjectController extends Controller
             'project_budget' => 'required|numeric|min:0',
             'project_end_date' => 'required|date|after:today',
             'client_id' => 'required|exists:clients,id',
-            'quote_id' => 'nullable|exists:quotes,id', // <--- NEW
+            'quote_id' => 'nullable|exists:quotes,id',
         ]);
 
         $project = Project::create([
@@ -51,7 +51,7 @@ class ProjectController extends Controller
             'project_start_date' => now(),
             'project_end_date' => $validated['project_end_date'],
             'client_id' => $validated['client_id'],
-            'quote_id' => $validated['quote_id'] ?? null, // <--- NEW
+            'quote_id' => $validated['quote_id'] ?? null,
         ]);
 
         if (!empty($validated['quote_id'])) {
@@ -68,29 +68,36 @@ class ProjectController extends Controller
 
     public function update(Request $request, string $id)
     {
+        $validated = $request->validate([
+            'project_name' => 'required|string|max:255',
+            'project_budget' => 'required|numeric|min:0',
+            'project_end_date' => 'required|date|after:today',
+            'client_id' => 'required|exists:clients,id',
+            'quote_id' => 'nullable|exists:quotes,id',
+        ]);
+
         $project = Project::find($id);
 
-        if ($project) {
-            if ($request->has('quote_id')) {
-                $request->validate(['quote_id' => 'nullable|exists:quotes,id']);
-            }
-
-            $project->update($request->all());
-
-            if ($request->has('quote_id') && $request->quote_id) {
-                Quote::where('id', $request->quote_id)
-                    ->update(['status' => 'accepted']);
-            }
-
-            return response()->json([
-                'message' => 'Project updated successfully',
-                'redirect' => route('projects')
-            ], 200);
-        } else {
+        if (!$project) {
             return response()->json([
                 'message' => 'Project not found'
             ], 404);
         }
+
+        $project->fill($validated);
+        // Check if anything is changed
+        if (! $project->isDirty()) {
+            return response()->json([
+                'message' => 'No changes were made'
+            ], 200);
+        };
+        // Save if anything is changed
+        $project->save();
+
+        return response()->json([
+            'message' => 'Project updated successfully',
+            'redirect' => route('projects')
+        ], 200);
     }
 
     public function destroy(string $id)

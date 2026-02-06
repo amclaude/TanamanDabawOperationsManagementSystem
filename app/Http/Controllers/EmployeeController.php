@@ -53,25 +53,36 @@ class EmployeeController extends Controller
         ]);
 
         $user = User::find($id);
-        if ($user) {
-            $dataToUpdate = [
-                'name'     => $validated['name'],
-                'email'    => $validated['email'],
-            ];
-
-            if ($request->boolean('reset_password')) {
-                $dataToUpdate['password'] = Hash::make('password123');
-            }
-            $user->update($dataToUpdate);
-
-            return response()->json([
-                'message' => 'Employee updated successfully'
-            ], 200);
-        } else {
+        if (! $user) {
             return response()->json([
                 'message' => 'Employee not found'
             ], 404);
         }
+        
+        $dataToUpdate = [
+            'name'     => $validated['name'],
+            'email'    => $validated['email'],
+        ];
+
+        if ($request->boolean('reset_password')) {
+            $dataToUpdate['password'] = Hash::make('password123');
+        }
+
+        $user->fill($dataToUpdate);
+        // Check if anything is changed in the data
+        if (! $user->isDirty()) {
+            return response()->json([
+                'message' => 'No changes were made'
+            ], 200);
+        }
+        // Only save the data if something is changed
+        $user->save();
+
+        return response()->json([
+            'message' => 'Employee updated successfully'
+        ], 200);
+        
+        
     }
 
 

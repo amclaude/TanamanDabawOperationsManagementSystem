@@ -26,16 +26,18 @@ class ClientController extends Controller
 
     public function create(Request $request)
     {
-        $validated = $request->validate([
-            'name'     => 'required|string|max:100',
-            'email'    => 'required|email|regex:/^[\w\.\-]+@[a-zA-Z\d\-]+\.[a-zA-Z]{2,}$/|unique:users,email',
-            'phone' => 'required|string|regex:/^09\d{9}$/',
-            'address' => 'required|string|max:255',
-        ],
-        [
-            'email.regex' => 'Please enter a valid email, e.g., abc@email.com',
-            'phone.regex' => 'Please enter a valid PH number, e.g., 09123456789'
-        ]);
+        $validated = $request->validate(
+            [
+                'name'     => 'required|string|max:100',
+                'email'    => 'required|email|regex:/^[\w\.\-]+@[a-zA-Z\d\-]+\.[a-zA-Z]{2,}$/|unique:clients,email',
+                'phone' => 'required|string|regex:/^09\d{9}$/|unique:clients,phone',
+                'address' => 'required|string|max:255',
+            ],
+            [
+                'email.regex' => 'Please enter a valid email, e.g., abc@email.com',
+                'phone.regex' => 'Please enter a valid PH number, e.g., 09123456789'
+            ]
+        );
         Client::create([
             'name'     => $validated['name'],
             'email'    => $validated['email'],
@@ -49,31 +51,42 @@ class ClientController extends Controller
     }
 
     public function update(Request $request, string $id)
-    {   
-        $validated = $request->validate([
-            'name'     => 'required|string|max:100',
-            'email'    => 'required|email|unique:users,email',
-            'phone' => 'required|string|regex:/^09\d{9}$/',
-            'address' => 'required|string|max:255',
-        ]);
+    {
+        $validated = $request->validate(
+            [
+                'name'     => 'required|string|max:100',
+                'email'    => 'required|email|regex:/^[\w\.\-]+@[a-zA-Z\d\-]+\.[a-zA-Z]{2,}$/',
+                'phone' => 'required|string|regex:/^09\d{9}$/',
+                'address' => 'required|string|max:255',
+            ],
+            [
+                'email.regex' => 'Please enter a valid email, e.g., abc@email.com',
+                'phone.regex' => 'Please enter a valid PH number, e.g., 09123456789'
+            ]
+        );
         $client = Client::find($id);
-        if ($client) {
-            $client->update([
-                'name'     => $validated['name'],
-                'email'    => $validated['email'],
-                'phone' => $validated['phone'],
-                'address' => $validated['address'],
-            ]);
 
-            return response()->json([
-                'message' => 'Client updated successfully'
-            ], 200);
-        } else {
+        if (! $client) {
             return response()->json([
                 'message' => 'Client not found'
             ], 404);
         }
+
+        // Fill but donot  save
+        $client->fill($validated);
+        // Check if anything is changed in the data
+        if (! $client->isDirty()) {
+            return response()->json([
+                'message' => 'No changes were made'
+            ], 200);
+        }
+
+        $client->save();
+        return response()->json([
+            'message' => 'Client updated successfully'
+        ], 200);
     }
+
     public function destroy(string $id)
     {
         $client = Client::find($id);

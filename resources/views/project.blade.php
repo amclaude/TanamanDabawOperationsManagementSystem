@@ -45,9 +45,9 @@
         color: #1e7e34;
     }
 
-    .status-badge.inactive {
-        background-color: #fce8e6;
-        color: #c62828;
+    .status-badge.completed {
+        background-color: #059669;
+        color: #fff;
     }
 
     tr[data-href] {
@@ -99,8 +99,8 @@
                 <td>{{ $project->project_name }}</td>
                 <td>{{ $project->client->name ?? 'N/A' }}</td>
                 <td>
-                    <span class="status-badge {{ $project->is_active ? 'active' : 'inactive' }}">
-                        {{ $project->is_active ? 'Active' : 'Inactive' }}
+                    <span class="status-badge {{ $project->is_active ? 'active' : 'active' }}">
+                        {{ $project->is_active ? 'Active' : 'Done' }}
                     </span>
                 </td>
                 <td>{{ $project->project_end_date }}</td>
@@ -146,7 +146,7 @@
             <h3 id="modalTitle">Add New Project</h3>
             <span class="close-modal-btn" id="closeProjectModal">&times;</span>
         </div>
-        <form class="modal-form">
+        <form class="modal-form" id="createProjectForm">
             <input type="hidden" id="project_id">
 
             <div class="input-group" id="quoteContainer" style="background: #f8fafc; padding: 10px; border: 1px dashed #cbd5e1; border-radius: 6px; margin-bottom: 15px;">
@@ -191,12 +191,12 @@
 
             <div class="input-group">
                 <label>Budget (₱)</label>
-                <input type="number" id="p_budget" placeholder="e.g. 5000" step="0.01" required>
+                <input type="number" id="p_budget" min="0" placeholder="e.g. 5000" step="0.01" required>
             </div>
 
             <div class="modal-actions">
                 <button type="button" class="btn-cancel">Cancel</button>
-                <button type="button" class="btn-save">Save Project</button>
+                <button type="submit" class="btn-save">Save Project</button>
             </div>
         </form>
     </div>
@@ -211,28 +211,34 @@
     let quoteSelect;
 
     document.addEventListener('DOMContentLoaded', function() {
-        
+
         // 1. Initialize Client Dropdown
-        if(document.getElementById('p_client')) {
+        if (document.getElementById('p_client')) {
             clientSelect = new TomSelect("#p_client", {
                 create: false,
-                sortField: { field: "text", direction: "asc" },
+                sortField: {
+                    field: "text",
+                    direction: "asc"
+                },
                 placeholder: "Select a Client..."
             });
         }
 
         // 2. Initialize Quote Dropdown (Used for Create Mode Auto-fill)
-        if(document.getElementById('p_quote')) {
+        if (document.getElementById('p_quote')) {
             quoteSelect = new TomSelect("#p_quote", {
                 create: false,
-                sortField: { field: "text", direction: "asc" },
+                sortField: {
+                    field: "text",
+                    direction: "asc"
+                },
                 placeholder: "Search for a quote...",
                 allowEmptyOption: true,
                 onChange: function(value) {
                     // This logic only runs when you pick a quote in the dropdown
                     const nameInput = document.getElementById('p_name');
                     const budgetInput = document.getElementById('p_budget');
-                    
+
                     // Get data from the selected option
                     const originalOption = document.querySelector(`#p_quote option[value="${value}"]`);
 
@@ -242,33 +248,33 @@
                         const budgetAmount = originalOption.getAttribute('data-budget');
                         const subject = originalOption.getAttribute('data-subject');
 
-                        if(nameInput) { 
-                            nameInput.value = subject; 
-                            nameInput.readOnly = true; 
+                        if (nameInput) {
+                            nameInput.value = subject;
+                            nameInput.readOnly = true;
                             nameInput.style.backgroundColor = "#f1f5f9"; // Grey
                         }
-                        if(budgetInput) { 
-                            budgetInput.value = budgetAmount; 
-                            budgetInput.readOnly = true; 
-                            budgetInput.style.backgroundColor = "#f1f5f9"; 
+                        if (budgetInput) {
+                            budgetInput.value = budgetAmount;
+                            budgetInput.readOnly = true;
+                            budgetInput.style.backgroundColor = "#f1f5f9";
                         }
-                        if (clientSelect) { 
-                            clientSelect.setValue(clientID); 
-                            clientSelect.lock(); 
+                        if (clientSelect) {
+                            clientSelect.setValue(clientID);
+                            clientSelect.lock();
                         }
                     } else {
                         // --- MANUAL MODE: RESET & UNLOCK ---
-                        if(nameInput) { 
-                            nameInput.readOnly = false; 
-                            nameInput.style.backgroundColor = "#fff"; 
+                        if (nameInput) {
+                            nameInput.readOnly = false;
+                            nameInput.style.backgroundColor = "#fff";
                         }
-                        if(budgetInput) { 
-                            budgetInput.readOnly = false; 
-                            budgetInput.style.backgroundColor = "#fff"; 
+                        if (budgetInput) {
+                            budgetInput.readOnly = false;
+                            budgetInput.style.backgroundColor = "#fff";
                         }
-                        if (clientSelect) { 
-                            clientSelect.unlock(); 
-                            clientSelect.clear(); 
+                        if (clientSelect) {
+                            clientSelect.unlock();
+                            clientSelect.clear();
                         }
                     }
                 }
@@ -283,6 +289,7 @@
     const closeBtn = document.querySelector('.close-modal-btn');
     const cancelBtn = document.querySelector('.btn-cancel');
     const saveBtn = document.querySelector('.btn-save');
+    const projectForm = document.getElementById('createProjectForm');
 
     const idField = document.getElementById('project_id');
     const nameField = document.getElementById('p_name');
@@ -298,17 +305,22 @@
             nameField.value = '';
             deadlineField.value = '';
             budgetField.value = '';
-            
+
             // Show Quote Dropdown
-            if(quoteContainer) quoteContainer.style.display = 'block';
+            if (quoteContainer) quoteContainer.style.display = 'block';
 
             // Reset Quote Dropdown (Triggers onChange to unlock fields)
-            if (quoteSelect) quoteSelect.clear(); 
+            if (quoteSelect) quoteSelect.clear();
 
             // Explicitly unlock just in case
-            nameField.readOnly = false; nameField.style.backgroundColor = "#fff";
-            budgetField.readOnly = false; budgetField.style.backgroundColor = "#fff";
-            if(clientSelect) { clientSelect.unlock(); clientSelect.clear(); }
+            nameField.readOnly = false;
+            nameField.style.backgroundColor = "#fff";
+            budgetField.readOnly = false;
+            budgetField.style.backgroundColor = "#fff";
+            if (clientSelect) {
+                clientSelect.unlock();
+                clientSelect.clear();
+            }
 
             modalTitle.innerText = "Add New Project";
             modal.style.display = 'flex';
@@ -319,7 +331,7 @@
     const table = document.querySelector('.data-table');
     if (table) {
         table.addEventListener('click', (e) => {
-            
+
             // --- EDIT BUTTON ---
             const editBtn = e.target.closest('.edit-btn');
             if (editBtn) {
@@ -337,26 +349,26 @@
                 idField.value = pId;
                 deadlineField.value = pDeadline;
                 modalTitle.innerText = "Edit Project";
-                
+
                 // RULE 1: Hide Quote Dropdown in Edit Mode
-                if(quoteContainer) quoteContainer.style.display = 'none';
+                if (quoteContainer) quoteContainer.style.display = 'none';
 
                 // RULE 2: STRICT LOCKING CHECK
                 // Check if linkedQuoteId exists and is not null/empty
                 if (linkedQuoteId && linkedQuoteId !== "null" && linkedQuoteId !== "") {
-                    
+
                     // --- HAS QUOTE: LOCK FIELDS ---
                     nameField.value = pName;
                     nameField.readOnly = true;
-                    nameField.style.backgroundColor = "#f1f5f9"; 
+                    nameField.style.backgroundColor = "#f1f5f9";
 
                     budgetField.value = pBudget;
                     budgetField.readOnly = true;
-                    budgetField.style.backgroundColor = "#f1f5f9"; 
+                    budgetField.style.backgroundColor = "#f1f5f9";
 
                     if (clientSelect) {
                         clientSelect.setValue(pClientId);
-                        clientSelect.lock(); 
+                        clientSelect.lock();
                     }
 
                 } else {
@@ -430,12 +442,12 @@
     }
 
     // --- 3. SAVE LOGIC ---
-    if (saveBtn) {
-        saveBtn.addEventListener('click', async (e) => {
+    if (projectForm) {
+        projectForm.addEventListener('submit', async (e) => {
             e.preventDefault();
 
             const id = idField.value;
-            
+
             // Base Data
             const formData = {
                 project_name: nameField.value,
@@ -444,7 +456,7 @@
                 project_budget: budgetField.value,
             };
 
-            let url = "{{ route('projects.create') }}"; 
+            let url = "{{ route('projects.create') }}";
             let method = 'POST';
 
             if (id) {
@@ -496,7 +508,9 @@
     }
 
     // --- CLOSE MODAL ---
-    const closeModal = () => { modal.style.display = 'none'; };
+    const closeModal = () => {
+        modal.style.display = 'none';
+    };
     if (closeBtn) closeBtn.addEventListener('click', closeModal);
     if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
     // window.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });

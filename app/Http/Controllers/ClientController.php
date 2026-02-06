@@ -28,9 +28,13 @@ class ClientController extends Controller
     {
         $validated = $request->validate([
             'name'     => 'required|string|max:100',
-            'email'    => 'required|email|unique:users,email',
+            'email'    => 'required|email|regex:/^[\w\.\-]+@[a-zA-Z\d\-]+\.[a-zA-Z]{2,}$/|unique:users,email',
             'phone' => 'required|string|regex:/^09\d{9}$/',
             'address' => 'required|string|max:255',
+        ],
+        [
+            'email.regex' => 'Please enter a valid email, e.g., abc@email.com',
+            'phone.regex' => 'Please enter a valid PH number, e.g., 09123456789'
         ]);
         Client::create([
             'name'     => $validated['name'],

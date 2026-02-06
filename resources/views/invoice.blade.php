@@ -125,6 +125,10 @@
     .btn-cancel { background: transparent; border: 1px solid #cbd5e1; color: #64748b; padding: 8px 20px; border-radius: 6px; cursor: pointer; margin-right: 10px; }
 
     /* --- VIEW MODE STYLES --- */
+    .view-mode-active #projectSelectContainer {
+        display: none !important;
+    }
+
     .view-mode-active .btn-save, 
     .view-mode-active #addItemBtn, 
     .view-mode-active .remove-btn {
@@ -184,7 +188,6 @@
                 </td>
                 <td>
                     <div class="actions-cell">
-                        {{-- Primary Actions --}}
                         @if($invoice->status === 'draft')
                             <button class="btn-icon btn-send send-email-btn"
                                 data-id="{{ $invoice->id }}"
@@ -200,15 +203,11 @@
                             </button>
                         @endif
 
-                        {{-- Menu Trigger --}}
                         <button class="btn-icon btn-menu-trigger" type="button" style="margin-left: 6px;">
                             <i class="fas fa-ellipsis-v"></i>
                         </button>
 
-                        {{-- Dropdown Menu --}}
                         <div class="action-menu">
-                            
-                            {{-- View/Edit Logic --}}
                             @if($invoice->status === 'paid')
                                 <button class="menu-item-btn view-btn"
                                     data-id="{{ $invoice->id }}"
@@ -223,21 +222,18 @@
                                 </button>
                             @endif
 
-                            {{-- Mark Paid: ONLY if Sent --}}
-                            @if($invoice->status === 'sent')
+                            @if($invoice->status !== 'paid' && $invoice->status !== 'sent')
                                 <button class="menu-item-btn mark-paid-btn" data-id="{{ $invoice->id }}">
                                     <i class="fas fa-check-circle" style="color: #10b981;"></i> Mark as Paid
                                 </button>
                             @endif
 
-                            {{-- Delete: Show if NOT Paid --}}
                             @if($invoice->status !== 'paid')
                                 <div style="border-top: 1px solid #f3f4f6; margin: 4px 0;"></div>
                                 <button class="menu-item-btn delete-btn text-danger" data-id="{{ $invoice->id }}">
                                     <i class="fas fa-trash-alt"></i> Delete Invoice
                                 </button>
                             @endif
-
                         </div>
                     </div>
                 </td>
@@ -262,7 +258,7 @@
         <form id="createInvoiceForm">
             <input type="hidden" id="invoiceId">
 
-            <div class="input-group">
+            <div class="input-group" id="projectSelectContainer">
                 <label>Select Project</label>
                 <select id="projectId" required style="width:100%; padding:10px; border:1px solid #ddd; border-radius:6px; background-color:#fff;">
                     <option value="">-- Choose a Project --</option>
@@ -323,29 +319,23 @@
         document.querySelectorAll('.btn-menu-trigger').forEach(trigger => {
             trigger.addEventListener('click', function(e) {
                 e.stopPropagation();
-                
                 document.querySelectorAll('.action-menu.show').forEach(menu => {
                     if (menu !== this.nextElementSibling) {
                         menu.classList.remove('show');
                         menu.previousElementSibling.classList.remove('active');
                     }
                 });
-
                 const menu = this.nextElementSibling;
                 const isAlreadyOpen = menu.classList.contains('show');
-
                 if (!isAlreadyOpen) {
                     this.classList.add('active');
                     menu.classList.add('show');
-                    
                     const rect = this.getBoundingClientRect();
                     const menuHeight = 160; 
                     const spaceBelow = window.innerHeight - rect.bottom;
-                    
                     let rightPos = window.innerWidth - rect.right;
                     menu.style.right = rightPos + 'px';
                     menu.style.left = 'auto';
-
                     if (spaceBelow < menuHeight) {
                         menu.style.top = 'auto';
                         menu.style.bottom = (window.innerHeight - rect.top + 5) + 'px';
@@ -380,6 +370,7 @@
 
         const invoiceIdInput = document.getElementById('invoiceId');
         const projectSelect = document.getElementById('projectId');
+        const projectSelectContainer = document.getElementById('projectSelectContainer');
         const clientDisplay = document.getElementById('clientNameDisplay');
         const clientIdInput = document.getElementById('clientId');
         const itemsContainer = document.getElementById('itemsContainer');
@@ -398,12 +389,13 @@
             isEditMode = false;
             invoiceIdInput.value = '';
             
-            form.classList.remove('view-mode-active');
+            // Re-show project selector (it might have been hidden by Edit or View mode)
+            projectSelectContainer.style.display = 'block';
             
+            form.classList.remove('view-mode-active');
             form.querySelectorAll('input, select').forEach(el => {
                 el.disabled = false;
             });
-            
             cancelBtn.innerText = "Cancel";
         };
 
@@ -430,7 +422,6 @@
             projectSelect.addEventListener('change', async function() {
                 const projectId = this.value;
                 const option = this.options[this.selectedIndex];
-
                 if (!projectId) {
                     if (!isEditMode) {
                         itemsContainer.innerHTML = '';
@@ -445,9 +436,7 @@
                     clientDisplay.value = option.dataset.clientName;
                 }
                 if (isEditMode) return;
-
                 itemsContainer.innerHTML = '<div style="color:#64748b; padding:10px; text-align:center;">Loading...</div>';
-
                 try {
                     const response = await fetch(`/projects/${projectId}/invoice-data`);
                     const data = await response.json();
@@ -494,12 +483,16 @@
 
         // --- DELEGATED EVENTS ---
 
-        // Edit
+        // Edit Mode Modification
         document.addEventListener('click', function(e) {
             if(e.target.closest('.edit-btn')) {
                 resetModalState();
                 const btn = e.target.closest('.edit-btn');
                 isEditMode = true;
+
+                // HIDE PROJECT SELECTOR DURING EDIT
+                projectSelectContainer.style.display = 'none';
+
                 const invoiceData = JSON.parse(btn.getAttribute('data-json'));
                 const invoiceId = btn.getAttribute('data-id');
 
@@ -523,7 +516,7 @@
             }
         });
 
-        // View
+        // View Mode
         document.addEventListener('click', function(e) {
             if(e.target.closest('.view-btn')) {
                 resetModalState();
@@ -541,12 +534,10 @@
                 document.getElementById('dueDate').value = invoiceData.due_date;
 
                 form.querySelectorAll('input, select').forEach(el => el.disabled = true);
-
                 itemsContainer.innerHTML = '';
                 if (invoiceData.items && invoiceData.items.length > 0) {
                     invoiceData.items.forEach(item => createRow(item.description, item.quantity, item.price));
                 }
-                
                 itemsContainer.querySelectorAll('input').forEach(el => el.disabled = true);
                 openModal();
                 calculateTotal();
@@ -560,7 +551,7 @@
                 const invoiceId = btn.getAttribute('data-id');
                 Swal.fire({
                     title: 'Mark as Paid?',
-                    text: "This will update the invoice status to Paid. This action cannot be undone.",
+                    text: "This will update the invoice status to Paid.",
                     icon: 'question',
                     showCancelButton: true,
                     confirmButtonColor: '#10b981',
@@ -574,20 +565,9 @@
                                 headers: { 'X-CSRF-TOKEN': "{{ csrf_token() }}", 'Accept': 'application/json' }
                             });
                             if (response.ok) {
-                                // Auto-reload on success
-                                Swal.fire({
-                                    icon: 'success',
-                                    title: 'Paid!',
-                                    text: 'Invoice marked as paid.',
-                                    timer: 1500,
-                                    showConfirmButton: false
-                                }).then(() => window.location.reload());
-                            } else {
-                                Swal.fire('Error', 'Could not update invoice.', 'error');
+                                Swal.fire({ icon: 'success', title: 'Paid!', timer: 1500, showConfirmButton: false }).then(() => window.location.reload());
                             }
-                        } catch (error) {
-                            Swal.fire('Error', 'System error occurred.', 'error');
-                        }
+                        } catch (error) { Swal.fire('Error', 'System error occurred.', 'error'); }
                     }
                 });
             }
@@ -600,16 +580,15 @@
                 const invoiceId = btn.getAttribute('data-id');
                 const clientEmail = btn.getAttribute('data-email');
                 if (!clientEmail) {
-                    Swal.fire('Error', 'This client does not have an email address linked.', 'error');
+                    Swal.fire('Error', 'No email linked to this client.', 'error');
                     return;
                 }
                 Swal.fire({
                     title: 'Send Invoice?',
-                    text: `Send this invoice to ${clientEmail}?`,
+                    text: `Send to ${clientEmail}?`,
                     icon: 'info',
                     showCancelButton: true,
                     confirmButtonColor: '#3b82f6',
-                    cancelButtonColor: '#64748b',
                     confirmButtonText: 'Yes, Send it!'
                 }).then(async (result) => {
                     if (result.isConfirmed) {
@@ -620,20 +599,9 @@
                                 headers: { 'X-CSRF-TOKEN': "{{ csrf_token() }}", 'Accept': 'application/json' }
                             });
                             if (response.ok) {
-                                // Auto-reload on success
-                                Swal.fire({
-                                    icon: 'success',
-                                    title: 'Sent!',
-                                    text: 'The invoice has been emailed successfully.',
-                                    timer: 1500,
-                                    showConfirmButton: false
-                                }).then(() => window.location.reload());
-                            } else {
-                                Swal.fire('Error', 'Could not send email.', 'error');
+                                Swal.fire({ icon: 'success', title: 'Sent!', timer: 1500, showConfirmButton: false }).then(() => window.location.reload());
                             }
-                        } catch (error) {
-                            Swal.fire('Error', 'System error occurred.', 'error');
-                        }
+                        } catch (error) { Swal.fire('Error', 'System error occurred.', 'error'); }
                     }
                 });
             }
@@ -646,11 +614,10 @@
                 const id = btn.getAttribute('data-id');
                 Swal.fire({
                     title: 'Delete Invoice?',
-                    text: "You won't be able to revert this!",
+                    text: "This action cannot be undone.",
                     icon: 'warning',
                     showCancelButton: true,
                     confirmButtonColor: '#d33',
-                    cancelButtonColor: '#64748b',
                     confirmButtonText: 'Yes, delete it!'
                 }).then(async (result) => {
                     if (result.isConfirmed) {
@@ -660,20 +627,9 @@
                                 headers: { 'X-CSRF-TOKEN': "{{ csrf_token() }}", 'Accept': 'application/json' }
                             });
                             if (response.ok) {
-                                // Auto-reload on success
-                                Swal.fire({
-                                    icon: 'success',
-                                    title: 'Deleted!',
-                                    text: 'Invoice has been deleted.',
-                                    timer: 1500,
-                                    showConfirmButton: false
-                                }).then(() => window.location.reload());
-                            } else {
-                                Swal.fire('Error', 'Could not delete invoice.', 'error');
+                                Swal.fire({ icon: 'success', title: 'Deleted!', timer: 1500, showConfirmButton: false }).then(() => window.location.reload());
                             }
-                        } catch (error) {
-                            Swal.fire('Error', 'System error occurred.', 'error');
-                        }
+                        } catch (error) { Swal.fire('Error', 'System error occurred.', 'error'); }
                     }
                 });
             }
@@ -727,13 +683,7 @@
                 });
                 if (response.ok) {
                     resetModalState();
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Success!',
-                        text: isEditMode ? 'Invoice updated.' : 'Invoice created.',
-                        timer: 1500,
-                        showConfirmButton: false
-                    }).then(() => window.location.reload());
+                    Swal.fire({ icon: 'success', title: 'Success!', timer: 1500, showConfirmButton: false }).then(() => window.location.reload());
                 } else {
                     const result = await response.json();
                     Swal.fire('Error', result.message || 'Validation failed.', 'error');

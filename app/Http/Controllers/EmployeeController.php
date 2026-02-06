@@ -20,11 +20,16 @@ class EmployeeController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'name'     => 'required|string|max:255',
-            'email'    => 'required|email|unique:users,email',
-            'position' => 'required|string|max:100',
-        ]);
+        $validated = $request->validate(
+            [
+                'name'     => 'required|string|max:255',
+                'email'    => 'required|email|regex:/^[\w\.\-]+@[a-zA-Z\d\-]+\.[a-zA-Z]{2,}$/|unique:users,email',
+                'position' => 'required|string|max:100',
+            ],
+            [
+                'email.regex' => 'Please enter a valid email, e.g., abc@email.com'
+            ]
+        );
 
         User::create([
             'name'      => $validated['name'],

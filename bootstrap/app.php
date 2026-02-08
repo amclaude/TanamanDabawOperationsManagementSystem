@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\CheckRole;
 use App\Http\Middleware\EnsureNotInstalled;
 use App\Http\Middleware\EnsureSetup;
 use App\Http\Middleware\RestrictUserAccess;
@@ -17,7 +18,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'not.installed' => EnsureNotInstalled::class,
             'restrict.user' => RestrictUserAccess::class,
-            'ensure.setup' => EnsureSetup::class
+            'ensure.setup' => EnsureSetup::class,
+            'role' => CheckRole::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

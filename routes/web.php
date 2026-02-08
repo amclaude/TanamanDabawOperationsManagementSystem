@@ -36,64 +36,78 @@ Route::middleware(['guest', 'ensure.setup'])->group(function () {
 });
 
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
+// Placeholder for Forgot Password
+Route::get('/forgot-password', function () {
+    return "<h1>Reset Password</h1><p>Contact your system administrator to reset your password.</p>";
+})->name('password.request');
 
-
-Route::middleware(['auth', 'restrict.user'])->group(function () {
+Route::middleware(['auth', 'restrict.user', 'role:Admin,Operations Manager'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-
-    // Employee Project Page (Placeholder)
-    Route::get('/employee/projects', function () {
-        return "<h1>Employee Projects</h1>";
-    })->name('employee.projects');
-
-    // Placeholder for Forgot Password
-    Route::get('/forgot-password', function () {
-        return "<h1>Reset Password</h1><p>Contact your system administrator to reset your password.</p>";
-    })->name('password.request');
 });
 
 // Clients
 Route::middleware(['auth', 'restrict.user'])->group(function () {
-    Route::get('/clients', [ClientController::class, 'index'])->name('clients');
-    Route::post('/clients', [ClientController::class, 'create'])->name('clients.create');
+    Route::get('/clients', [ClientController::class, 'index'])
+        ->middleware('role:Admin,Operations Manager')
+        ->name('clients');
+    Route::post('/clients', [ClientController::class, 'create'])
+        ->middleware('role:Admin,Operations Manager')
+        ->name('clients.create');
     Route::put('clients/{id}', [ClientController::class, 'update'])
+        ->middleware('role:Admin,Operations Manager')
         ->name('clients.update');
     Route::delete('clients/{id}', [ClientController::class, 'destroy'])
+        ->middleware('role:Admin')
         ->name('clients.destroy');
-
-    Route::get('/clients/{id}', [ClientController::class, 'show'])->name('clients.panel');
+    Route::get('/clients/{id}', [ClientController::class, 'show'])
+        ->middleware('role:Admin,Operations Manager') // Restrict to this roles only
+        ->name('clients.panel');
 });
 
 // Projects
-Route::middleware(['auth', 'restrict.user'])->group(function () {
-    Route::get('/projects', [ProjectController::class, 'index'])->name('projects');
-    Route::post('/projects', [ProjectController::class, 'create'])->name('projects.create');
+Route::middleware(['auth', 'restrict.user', 'role:Admin,Operations Manager'])->group(function () {
+    Route::get('/projects', [ProjectController::class, 'index'])
+        ->name('projects');
+    Route::post('/projects', [ProjectController::class, 'create'])
+        ->name('projects.create');
     Route::put('projects/{id}', [ProjectController::class, 'update'])
         ->name('projects.update');
-    Route::patch('/projects/{id}/complete', [ProjectController::class, 'complete'])->name('projects.complete');
+    Route::patch('/projects/{id}/complete', [ProjectController::class, 'complete'])
+        ->name('projects.complete');
     Route::delete('projects/{id}', [ProjectController::class, 'destroy'])
         ->name('projects.destroy');
     Route::get('/projects/{id}', [ProjectController::class, 'show'])->name('projects.panel');
-    // Route::post('/projects/{id}/upload', [ProjectController::class, 'uploadImage'])->name('projects.upload');
 });
 
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'role:Admin,Operations Manager,Head Landscaper'])->group(function () {
     // Allow Head Landscapers to upload photos
     Route::post('/projects/{id}/upload', [ProjectController::class, 'uploadImage'])->name('projects.upload');
 });
 
 // Employees
 Route::middleware(['auth', 'restrict.user'])->group(function () {
-    Route::get('/employees', [EmployeeController::class, 'index'])->name('employees');
-    Route::post('/employees', [EmployeeController::class, 'store'])->name('employees.store');
-    Route::put('/employees/{employee}', [EmployeeController::class, 'update'])->name('employees.update');
-    Route::put('/employees/{id}/deactivate', [EmployeeController::class, 'deactivate'])->name('employees.deactivate');
-    Route::delete('/employees/{employee}', [EmployeeController::class, 'destroy'])->name('employees.destroy');
-    Route::get('/employees/{employee}', [EmployeeController::class, 'show'])->name('employees.panel');
+    Route::get('/employees', [EmployeeController::class, 'index'])
+        ->middleware('role:Admin,Operations Manager')
+        ->name('employees');
+    Route::post('/employees', [EmployeeController::class, 'store'])
+        ->middleware('role:Admin,Operations Manager')
+        ->name('employees.store');
+    Route::put('/employees/{employee}', [EmployeeController::class, 'update'])
+        ->middleware('role:Admin,Operations Manager')
+        ->name('employees.update');
+    Route::put('/employees/{id}/deactivate', [EmployeeController::class, 'deactivate'])
+        ->middleware('role:Admin')
+        ->name('employees.deactivate');
+    Route::delete('/employees/{employee}', [EmployeeController::class, 'destroy'])
+        ->middleware('role:Admin,Operations Manager')
+        ->name('employees.destroy');
+    Route::get('/employees/{employee}', [EmployeeController::class, 'show'])
+        ->middleware('role:Admin,Operations Manager')
+        ->name('employees.panel');
 });
 
 
-Route::middleware(['auth', 'restrict.user'])->group(function () {
+Route::middleware(['auth', 'restrict.user', 'role:Admin,Operations Manager'])->group(function () {
     Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory');
     Route::post('/inventory', [InventoryController::class, 'store'])->name('inventory.store'); // Add Item
     Route::put('/inventory/{id}', [InventoryController::class, 'update'])->name('inventory.update'); // Edit Item
@@ -102,14 +116,14 @@ Route::middleware(['auth', 'restrict.user'])->group(function () {
     Route::post('/inventory/{id}/stock-out', [InventoryController::class, 'stockOut'])->name('inventory.stock-out');
 });
 
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'restrict.user', 'role:Admin,Operations Manager'])->group(function () {
     Route::get('/quotes', [QuoteController::class, 'index'])->name('quotes');
     Route::post('/quotes', [QuoteController::class, 'store'])->name('quotes.store');
     Route::put('/quotes/{id}', [QuoteController::class, 'update'])->name('quotes.update'); // For Edit
     Route::delete('/quotes/{id}', [QuoteController::class, 'destroy'])->name('quotes.destroy');
 });
 
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'restrict.user', 'role:Admin,Operations Manager'])->group(function () {
     Route::get('/invoices', [InvoiceController::class, 'index'])->name('invoices');
     Route::post('/invoices', [InvoiceController::class, 'store'])->name('invoices.store');
     Route::put('/invoices/{id}', [InvoiceController::class, 'update'])->name('invoices.update');
@@ -125,7 +139,7 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
 });
 
-Route::middleware(['auth', 'restrict.user'])->group(function () {
+Route::middleware(['auth', 'restrict.user', 'role:Head Landscaper,Field Crew'])->group(function () {
     Route::get('/assigned/projects', [ProjectController::class, 'index'])->name('employee.projects');
     Route::get('/assigned/projects/{id}', [ProjectController::class, 'show'])->name('employee.panel');
 });

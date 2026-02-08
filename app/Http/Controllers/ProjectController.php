@@ -6,7 +6,9 @@ use App\Models\Client;
 use App\Models\Project;
 use App\Models\ProjectImage;
 use App\Models\Quote;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use function Symfony\Component\Clock\now;
 
@@ -14,24 +16,33 @@ class ProjectController extends Controller
 {
     public function index(Request $request)
     {
+        $user = Auth::user();
 
-        $query = Project::query();
+        if (in_array($user->role, ['Head Landscaper', 'Field Crew'])) {
+            $projects = Project::with('client')
+                ->where('is_active', true)
 
-        if ($request->filled('search')) {
-            $searchTerm = $request->input('search');
+                ->where(function ($query) use ($user) {
+                    $query->where('head_landscaper_id', $user->id)
+                        ->orWhereHas('fieldCrew', function ($subQuery) use ($user) {
+                            $subQuery->where('users.id', $user->id);
+                        });
+                })
 
-            $query->where(function ($q) use ($searchTerm) {
-                $q->where('project_name', 'like', "%{$searchTerm}%")
-                    ->orWhere('project_budget', 'like', "%{$searchTerm}%")
-                    ->orWhereHas('client', function ($clientQuery) use ($searchTerm) {
-                        $clientQuery->where('name', 'like', "%{$searchTerm}%");
-                    });
-            });
+                ->orderBy('project_start_date', 'asc')
+                ->get();
+            return view('projectcrew', compact('projects'));
         }
-        $projects = $query->paginate(20)->withQueryString();
+        $query = Project::with(['client', 'headLandscaper', 'fieldCrew']);
+
+        $projects = $query->latest()->paginate(20)->withQueryString();
+
         $pendingQuotes = Quote::where('status', 'pending')->get();
         $clients = Client::all();
-        return view('project', compact('projects', 'clients', 'pendingQuotes'));
+
+        $workers = User::whereIn('role', ['Head Landscaper', 'Field Crew'])->get();
+
+        return view('project', compact('projects', 'clients', 'pendingQuotes', 'workers'));
     }
 
     public function create(Request $request)
@@ -42,6 +53,11 @@ class ProjectController extends Controller
             'project_end_date' => 'required|date|after:today',
             'client_id' => 'required|exists:clients,id',
             'quote_id' => 'nullable|exists:quotes,id',
+            'project_description' => 'nullable|string',
+            'project_location' => 'required|string|max:255',
+            'head_landscaper_id' => 'nullable|exists:users,id',
+            'crew_ids' => 'nullable|array',
+            'crew_ids.*' => 'exists:users,id',
         ]);
 
         $project = Project::create([
@@ -52,11 +68,17 @@ class ProjectController extends Controller
             'project_end_date' => $validated['project_end_date'],
             'client_id' => $validated['client_id'],
             'quote_id' => $validated['quote_id'] ?? null,
+            'project_description' => $validated['project_description'],
+            'project_location' => $validated['project_location'],
+            'head_landscaper_id' => $validated['head_landscaper_id'],
         ]);
 
+        if (!empty($validated['crew_ids'])) {
+            $project->fieldCrew()->sync($validated['crew_ids']);
+        }
+
         if (!empty($validated['quote_id'])) {
-            Quote::where('id', $validated['quote_id'])
-                ->update(['status' => 'accepted']);
+            Quote::where('id', $validated['quote_id'])->update(['status' => 'accepted']);
         }
 
         return response()->json([
@@ -74,25 +96,29 @@ class ProjectController extends Controller
             'project_end_date' => 'required|date|after:today',
             'client_id' => 'required|exists:clients,id',
             'quote_id' => 'nullable|exists:quotes,id',
+            'project_description' => 'nullable|string',
+            'project_location' => 'required|string|max:255',
+            'head_landscaper_id' => 'nullable|exists:users,id',
+            'crew_ids' => 'nullable|array',
+            'crew_ids.*' => 'exists:users,id',
         ]);
 
-        $project = Project::find($id);
+        $project = Project::findOrFail($id);
 
-        if (!$project) {
-            return response()->json([
-                'message' => 'Project not found'
-            ], 404);
-        }
+        // Update the main project details
+        $project->update([
+            'project_name' => $validated['project_name'],
+            'project_budget' => $validated['project_budget'],
+            'project_end_date' => $validated['project_end_date'],
+            'client_id' => $validated['client_id'],
+            'quote_id' => $validated['quote_id'],
+            'project_description' => $validated['project_description'],
+            'project_location' => $validated['project_location'],
+            'head_landscaper_id' => $validated['head_landscaper_id'],
+        ]);
 
-        $project->fill($validated);
-        // Check if anything is changed
-        if (! $project->isDirty()) {
-            return response()->json([
-                'message' => 'No changes were made'
-            ], 200);
-        };
-        // Save if anything is changed
-        $project->save();
+        // Update the Field Crew
+        $project->fieldCrew()->sync($validated['crew_ids'] ?? []);
 
         return response()->json([
             'message' => 'Project updated successfully',
@@ -173,8 +199,7 @@ class ProjectController extends Controller
             ]);
         }
 
-        return redirect()->route('projects.panel', ['id' => $id])
-            ->with('success', 'Photos uploaded successfully!');
+        return back()->with('success', 'Photos uploaded successfully!');
     }
 
     public function getInvoiceData($id)

@@ -13,10 +13,25 @@
         font-weight: 600;
         text-transform: capitalize;
     }
-    .status-badge.pending { background: #fff7ed; color: #c2410c; border: 1px solid #ffedd5; }
-    .status-badge.accepted { background: #f0fdf4; color: #15803d; border: 1px solid #dcfce7; }
-    .status-badge.rejected { background: #fef2f2; color: #b91c1c; border: 1px solid #fee2e2; }
-    
+
+    .status-badge.pending {
+        background: #fff7ed;
+        color: #c2410c;
+        border: 1px solid #ffedd5;
+    }
+
+    .status-badge.accepted {
+        background: #f0fdf4;
+        color: #15803d;
+        border: 1px solid #dcfce7;
+    }
+
+    .status-badge.rejected {
+        background: #fef2f2;
+        color: #b91c1c;
+        border: 1px solid #fee2e2;
+    }
+
     /* Archived Status Design */
     .status-badge.archived {
         background-color: #f1f5f9;
@@ -25,23 +40,64 @@
     }
 
     /* Table & Actions */
-    .item-row { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
-    .ts-control { border-radius: 6px; padding: 10px; border: 1px solid #ddd; }
-    .ts-dropdown { z-index: 99999 !important; }
+    .item-row {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 8px;
+        align-items: center;
+    }
+
+    .ts-control {
+        border-radius: 6px;
+        padding: 10px;
+        border: 1px solid #ddd;
+    }
+
+    .ts-dropdown {
+        z-index: 99999 !important;
+    }
 
     .btn-action {
-        width: 32px; height: 32px; border-radius: 6px; border: none;
-        display: inline-flex; align-items: center; justify-content: center;
-        color: white; font-size: 1rem; cursor: pointer; transition: opacity 0.2s; margin-right: 6px;
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: opacity 0.2s;
+        margin-right: 6px;
     }
-    .edit-btn { background-color: #10b981; }
-    .edit-btn:hover { background-color: #059669; }
-    .delete-btn { background-color: #ef4444; }
-    .delete-btn:hover { background-color: #dc2626; }
-    
+
+    .edit-btn {
+        background-color: #10b981;
+    }
+
+    .edit-btn:hover {
+        background-color: #059669;
+    }
+
+    .delete-btn {
+        background-color: #ef4444;
+    }
+
+    .delete-btn:hover {
+        background-color: #dc2626;
+    }
+
     /* View Button Design */
-    .view-btn { background-color: #10b981; color: #fff; border: 1px solid #dbeafe; }
-    .view-btn:hover { background-color: #059669; }
+    .view-btn {
+        background-color: #10b981;
+        color: #fff;
+        border: 1px solid #dbeafe;
+    }
+
+    .view-btn:hover {
+        background-color: #059669;
+    }
 
     /* Helper to hide elements in View Mode */
     .view-mode-active .btn-remove,
@@ -49,7 +105,7 @@
     .view-mode-active #saveQuoteBtn {
         display: none !important;
     }
-    
+
     /* Visually indicate disabled inputs in view mode */
     .view-mode-active input {
         background-color: #f8fafc;
@@ -100,18 +156,18 @@
                 </td>
                 <td>
                     @if(strtolower($quote->status) === 'archived')
-                        {{-- ARCHIVED: Show Eye, Hide Delete --}}
-                        <button class="btn-action view-btn" data-quote="{{ json_encode($quote) }}" title="View Details">
-                            <i class="fas fa-eye"></i>
-                        </button>
+                    {{-- ARCHIVED: Show Eye, Hide Delete --}}
+                    <button class="btn-action view-btn" data-quote="{{ json_encode($quote) }}" title="View Details">
+                        <i class="fas fa-eye"></i>
+                    </button>
                     @else
-                        {{-- ACTIVE: Show Edit & Delete --}}
-                        <button class="btn-action edit-btn" data-quote="{{ json_encode($quote) }}" title="Edit">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="btn-action delete-btn" data-id="{{ $quote->id }}" title="Delete">
-                            <i class="fas fa-trash-alt"></i>
-                        </button>
+                    {{-- ACTIVE: Show Edit & Delete --}}
+                    <button class="btn-action edit-btn" data-quote="{{ json_encode($quote) }}" title="Edit">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn-action delete-btn" data-id="{{ $quote->id }}" title="Delete">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
                     @endif
                 </td>
             </tr>
@@ -194,7 +250,10 @@
         if (document.getElementById('clientId')) {
             clientSelect = new TomSelect("#clientId", {
                 create: false,
-                sortField: { field: "text", direction: "asc" },
+                sortField: {
+                    field: "text",
+                    direction: "asc"
+                },
                 placeholder: "Select a Client..."
             });
         }
@@ -219,7 +278,9 @@
                 const price = parseFloat(row.querySelector('.item-price').value) || 0;
                 total += (qty * price);
             });
-            totalInput.value = '₱ ' + total.toLocaleString('en-US', { minimumFractionDigits: 2 });
+            totalInput.value = '₱ ' + total.toLocaleString('en-US', {
+                minimumFractionDigits: 2
+            });
         }
 
         function createItemRow(desc = '', qty = 1, price = '') {
@@ -236,7 +297,7 @@
 
             // Add event listeners for calculation
             div.querySelectorAll('input').forEach(input => input.addEventListener('input', calculateTotal));
-            
+
             // Remove functionality
             div.querySelector('.btn-remove').addEventListener('click', () => {
                 div.remove();
@@ -249,17 +310,17 @@
 
         function resetModalState() {
             // Unlock TomSelect
-            if(clientSelect) clientSelect.unlock();
-            
+            if (clientSelect) clientSelect.unlock();
+
             // Enable all inputs
             form.querySelectorAll('input').forEach(input => input.disabled = false);
-            
+
             // Remove View Mode class (shows buttons again)
             form.classList.remove('view-mode-active');
-            
+
             // Show Save Button and reset text
             saveBtn.style.display = 'inline-block';
-            
+
             form.reset();
         }
 
@@ -314,23 +375,23 @@
             const viewBtn = e.target.closest('.view-btn');
             if (viewBtn) {
                 resetModalState(); // Start clean
-                
+
                 const quote = JSON.parse(viewBtn.dataset.quote);
-                
+
                 // Set UI to "View Mode"
                 modalTitle.innerText = "View Quote (Archived)";
                 form.classList.add('view-mode-active'); // CSS handles hiding buttons/styling
-                
+
                 // Populate Data
                 if (clientSelect) {
                     clientSelect.setValue(quote.client_id);
                     clientSelect.lock(); // Disable dropdown
                 }
-                
+
                 document.getElementById('quoteSubject').value = quote.subject || '';
                 document.getElementById('quoteDate').value = quote.quote_date;
                 document.getElementById('validUntil').value = quote.valid_until;
-                
+
                 // Disable inputs
                 form.querySelectorAll('input').forEach(input => input.disabled = true);
 
@@ -344,7 +405,7 @@
                     // Show one empty row if none exist, but disabled
                     createItemRow();
                 }
-                
+
                 // Re-disable item inputs (since createItemRow makes them enabled by default)
                 itemsContainer.querySelectorAll('input').forEach(input => input.disabled = true);
 
@@ -359,7 +420,7 @@
 
         document.getElementById('addItemBtn').addEventListener('click', () => {
             // Only allow adding items if NOT in view mode
-            if(!form.classList.contains('view-mode-active')) {
+            if (!form.classList.contains('view-mode-active')) {
                 createItemRow();
             }
         });
@@ -367,9 +428,9 @@
         // Form Submit (Create/Update)
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            
+
             // Safety check: Do not submit if in view mode
-            if(form.classList.contains('view-mode-active')) return;
+            if (form.classList.contains('view-mode-active')) return;
 
             const items = [];
             document.querySelectorAll('.item-row').forEach(row => {
@@ -397,6 +458,10 @@
             }
 
             try {
+                Swal.fire({
+                    title: 'Processing...',
+                    didOpen: () => Swal.showLoading()
+                });
                 const response = await fetch(url, {
                     method: method,
                     headers: {
@@ -444,7 +509,9 @@
                         try {
                             const res = await fetch(`/quotes/${id}`, {
                                 method: 'DELETE',
-                                headers: { 'X-CSRF-TOKEN': csrfToken }
+                                headers: {
+                                    'X-CSRF-TOKEN': csrfToken
+                                }
                             });
                             if (res.ok) window.location.reload();
                         } catch (err) {

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -19,9 +20,10 @@
     @include('partials.navbar')
 
     <div class="dashboard-container">
-        @include('partials.sidebar')
-
-        <main class="main-content">
+        @if(in_array(auth()->user()->role, ['Admin', 'Operations Manager']))
+            @include('partials.sidebar')
+        @endif
+        <main class="main-content" style="padding: 30px 25px;">
             @yield('content')
         </main>
     </div>
@@ -29,4 +31,5 @@
     @include('partials.footer')
     @stack('scripts')
 </body>
+
 </html>

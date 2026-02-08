@@ -18,7 +18,7 @@ class InvoiceController extends Controller
         $invoices = Invoice::with(['client', 'project'])->latest()->get();
 
         // Get active projects for the "Create Invoice" dropdown
-        $projects = Project::where('is_active', true)->get();
+        $projects = Project::where('is_active', false)->get();
 
         return view('invoice', compact('invoices', 'projects'));
     }

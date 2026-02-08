@@ -16,14 +16,12 @@ class RestrictUserAccess
      */
     public function handle(Request $request, Closure $next): Response
     {
-  
-        if (Auth::check()) {
-            if (Auth::user()->is_admin == false) {
 
-      
-                if (!$request->is('employee/projects') && !$request->is('employee/projects/*')) {
-                    
-                    return redirect('/employee/projects');
+        if (Auth::check()) {
+            if (Auth::user()->role != "Admin" && Auth::user()->role != "Operations Manager") {
+                if (!$request->is('assigned/projects') && !$request->is('assigned/projects/*')) {
+
+                    return redirect('/assigned/projects');
                 }
             }
         }

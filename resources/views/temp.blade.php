@@ -11,6 +11,7 @@
     <h1>Employee Project View</h1>
     <p>Name: {{ auth()->user()->name }}</p>
     <p>Email: {{ auth()->user()->email }}</p>
+    <p>Role: {{ auth()->user()->role }}</p>
     <form method="POST" action="{{ route('logout') }}" style="margin-top: 20px;">
         @csrf
         <div class="sidebar-footer">

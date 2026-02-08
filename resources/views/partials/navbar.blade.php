@@ -12,7 +12,7 @@
     <div class="nav-profile" id="profile-trigger">
         <div class="profile-text">
             <span class="profile-name">{{ Auth::user()->name }}</span>
-            <span class="profile-role">{{ Auth::user()->is_admin ? 'Admin' : 'User' }}</span>
+            <span class="profile-role">{{ Auth::user()->role }}</span>
         </div>
         <img src="{{ asset('images/images.jpg') }}" class="profile-pic">
         <i class="fas fa-chevron-down dropdown-icon"></i>

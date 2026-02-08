@@ -17,8 +17,10 @@ class Project extends Model
         'is_active',
         'project_start_date',
         'project_end_date',
+        'project_description',
+        'project_location',
         'client_id',
-        'assigned_user_id'
+        'head_landscaper_id',
     ];
 
     public function client()
@@ -34,5 +36,15 @@ class Project extends Model
     public function quote()
     {
         return $this->belongsTo(Quote::class);
+    }
+
+    public function headLandscaper()
+    {
+        return $this->belongsTo(User::class, 'head_landscaper_id');
+    }
+
+    public function fieldCrew()
+    {
+        return $this->belongsToMany(User::class, 'project_field_crew');
     }
 }

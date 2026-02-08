@@ -8,11 +8,13 @@
         z-index: 20000 !important;
     }
 
+    /* Status Badges */
     .status-badge {
         padding: 4px 8px;
         border-radius: 12px;
         font-size: 0.85rem;
         font-weight: 600;
+        display: inline-block;
     }
 
     .status-badge.active {
@@ -25,6 +27,7 @@
         color: #991b1b;
     }
 
+    /* Buttons */
     .btn-primary,
     .btn-action {
         border: none;
@@ -48,12 +51,52 @@
         font-size: 0.9rem;
         margin-right: 5px;
         color: white;
+        transition: background 0.2s;
     }
 
-
+    .edit-btn {
+        background-color: #319B72;
+    }
 
     .delete-btn {
         background-color: #ef4444;
+    }
+
+    /* Form Styles */
+    .modal-form select,
+    .modal-form input[type="text"],
+    .modal-form input[type="email"] {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        margin-top: 5px;
+        background-color: white;
+    }
+
+    .helper-text {
+        font-size: 0.8rem;
+        color: #64748b;
+        margin-top: 4px;
+    }
+
+    .radio-group {
+        display: flex;
+        gap: 15px;
+        margin-top: 5px;
+    }
+
+    .radio-label {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        cursor: pointer;
+        font-size: 0.95rem;
+    }
+
+    .radio-label input {
+        width: auto;
+        margin: 0;
     }
 </style>
 @endpush
@@ -71,9 +114,12 @@
             <i class="fas fa-search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #64748b;"></i>
         </div>
 
-        <button class="btn-primary" id="addEmployeeBtn">
-            <i class="fas fa-plus"></i> Add Employee
-        </button>
+        {{-- SECURITY UPDATE: Only Admin can HIRE (Add) employees --}}
+        @if(auth()->user()->role === 'Admin')
+            <button class="btn-primary" id="addEmployeeBtn">
+                <i class="fas fa-plus"></i> Add Employee
+            </button>
+        @endif
     </div>
 </div>
 
@@ -82,10 +128,9 @@
         <thead>
             <tr>
                 <th>Name</th>
-                <th>Username</th>
                 <th>Email</th>
-                <th>Account type</th>
-                <!-- <th>Status</th> -->
+                <th>Role</th>
+                <th>Status</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -93,24 +138,43 @@
             @forelse($employees as $emp)
             <tr data-href="{{ route('employees.panel', $emp->id) }}">
                 <td>{{ $emp->name }}</td>
-                <td>{{ $emp->username }}</td>
                 <td>{{ $emp->email }}</td>
-                <td>{{ $emp->is_admin ? 'Admin' : 'Employee' }}</td>
-                <!-- <td>
-                        <span class="status-badge {{ $emp->is_active ? 'active' : 'inactive' }}">
-                            {{ $emp->is_active ? 'Active' : 'Inactive' }}
-                        </span>
-                    </td> -->
                 <td>
-                    <button class="btn-primary edit-btn"
-                        data-id="{{ $emp->id }}"
-                        data-name="{{ $emp->name }}"
-                        data-email="{{ $emp->email }}">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn-action delete-btn" data-id="{{ $emp->id }}">
-                        <i class="fas fa-trash-alt"></i>
-                    </button>
+                    <strong>{{ $emp->role }}</strong>
+                </td>
+                <td>
+                    <span class="status-badge {{ $emp->status === 'Active' ? 'active' : 'inactive' }}">
+                        {{ $emp->status }}
+                    </span>
+                </td>
+                <td>
+                    <div>
+                        {{-- 
+                            LOGIC: 
+                            1. Admin can edit everyone.
+                            2. Ops Manager can edit everyone EXCEPT 'Admin' and 'Operations Manager'
+                        --}}
+                        @if(auth()->user()->role === 'Admin' || ($emp->role !== 'Admin' && $emp->role !== 'Operations Manager'))
+                            <button class="btn-action edit-btn"
+                                data-id="{{ $emp->id }}"
+                                data-name="{{ $emp->name }}"
+                                data-email="{{ $emp->email }}"
+                                data-role="{{ $emp->role }}"
+                                data-status="{{ $emp->status }}"
+                                title="Edit Details">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                        @endif
+
+                        {{-- SECURITY UPDATE: Only Admin can FIRE (Delete) employees --}}
+                        @if(auth()->user()->role === 'Admin')
+                            <button class="btn-action delete-btn"
+                                data-id="{{ $emp->id }}"
+                                title="Delete Permanently">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        @endif
+                    </div>
                 </td>
             </tr>
             @empty
@@ -122,7 +186,7 @@
     </table>
 </div>
 
-<div class="modal-overlay" id="employeeModal">
+<div class="modal-overlay" id="employeeModal" style="display: none;">
     <div class="modal-box">
         <div class="modal-header">
             <h3 id="modalTitle">Add New Employee</h3>
@@ -141,12 +205,45 @@
                 <label>Email Address</label>
                 <input type="email" id="email" placeholder="contact@company.com" required>
             </div>
+
+            <div class="input-group">
+                <label>Role / Access Level</label>
+                <select id="role" required>
+                    <option value="" disabled selected>Select a Role</option>
+                    
+                    {{-- SECURITY UPDATE: Only Admin can see/assign the Operations Manager role --}}
+                    @if(auth()->user()->role === 'Admin')
+                        <option value="Operations Manager">Operations Manager</option>
+                    @endif
+
+                    <option value="Head Landscaper">Head Landscaper</option>
+                    <option value="Field Crew">Field Crew</option>
+                </select>
+                <p class="helper-text">* Field Crew members cannot log in to the dashboard.</p>
+            </div>
+
+            <div class="input-group" id="statusContainer" style="display: none; margin-top: 15px; padding-top: 10px; border-top: 1px dashed #ddd;">
+                <label style="font-weight: bold; display: block; margin-bottom: 8px;">Account Status</label>
+                <div class="radio-group">
+                    <label class="radio-label">
+                        <input type="radio" name="status" value="Active" id="statusActive">
+                        <span style="color: #065f46; font-weight: 600;">Active</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="status" value="Inactive" id="statusInactive">
+                        <span style="color: #991b1b;">Inactive (Deactivated)</span>
+                    </label>
+                </div>
+                <p class="helper-text">Inactive users cannot log in.</p>
+            </div>
+
             <div class="input-group" id="resetPasswordContainer" style="display: none; margin-top: 15px;">
                 <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
                     <input type="checkbox" id="reset_password" style="width: auto;">
                     <span style="font-size: 0.9rem;">Reset Password to "password123"</span>
                 </label>
             </div>
+
             <div class="modal-actions">
                 <button type="button" class="btn-cancel">Cancel</button>
                 <button type="submit" class="btn-save">Save Employee</button>
@@ -159,188 +256,200 @@
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', () => {
-                // Variables
-                const modal = document.getElementById('employeeModal');
-                const modalTitle = document.getElementById('modalTitle');
-                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        const modal = document.getElementById('employeeModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
-                const nameInput = document.getElementById('name');
-                const emailInput = document.getElementById('email');
-                const idInput = document.getElementById('emp_id');
+        const nameInput = document.getElementById('name');
+        const emailInput = document.getElementById('email');
+        const roleInput = document.getElementById('role');
+        const idInput = document.getElementById('emp_id');
 
-                // Reset Password Elements
-                const resetPassContainer = document.getElementById('resetPasswordContainer');
-                const resetPassInput = document.getElementById('reset_password');
+        const statusContainer = document.getElementById('statusContainer');
+        const statusActive = document.getElementById('statusActive');
+        const statusInactive = document.getElementById('statusInactive');
 
-                // const rows = document.querySelectorAll('tr[data-href]');
+        const resetPassContainer = document.getElementById('resetPasswordContainer');
+        const resetPassInput = document.getElementById('reset_password');
 
-                // rows.forEach(row => {
-                //     row.addEventListener('click', () => {
-                //         window.location.href = row.dataset.href; // <--- This redirects the page
-                //     });
-                // });
+        const searchInput = document.getElementById('searchInput');
+        const tableBody = document.getElementById('employeeTableBody');
+        
+        // Button might not exist if user is Ops Manager
+        const addEmployeeBtn = document.getElementById('addEmployeeBtn');
 
-                // Search Logic
-                const searchInput = document.getElementById('searchInput');
-                const tableBody = document.getElementById('employeeTableBody');
+        if (searchInput) {
+            searchInput.addEventListener('keyup', function() {
+                const filter = searchInput.value.toLowerCase();
+                const rows = tableBody.getElementsByTagName('tr');
+                for (let i = 0; i < rows.length; i++) {
+                    let textContent = rows[i].innerText.toLowerCase();
+                    rows[i].style.display = textContent.includes(filter) ? "" : "none";
+                }
+            });
+        }
 
-                if (searchInput) {
-                    searchInput.addEventListener('keyup', function() {
-                        const filter = searchInput.value.toLowerCase();
-                        const rows = tableBody.getElementsByTagName('tr');
-                        for (let i = 0; i < rows.length; i++) {
-                            let textContent = rows[i].innerText.toLowerCase();
-                            rows[i].style.display = textContent.includes(filter) ? "" : "none";
-                        }
-                    });
+        const closeModal = () => {
+            modal.style.display = 'none';
+        };
+        document.querySelector('.close-modal-btn').addEventListener('click', closeModal);
+        document.querySelector('.btn-cancel').addEventListener('click', closeModal);
+
+        // --- ADD BUTTON ---
+        if (addEmployeeBtn) {
+            addEmployeeBtn.addEventListener('click', () => {
+                idInput.value = '';
+                nameInput.value = '';
+                emailInput.value = '';
+                roleInput.value = '';
+
+                // Hide Status (Default is Active)
+                statusContainer.style.display = 'none';
+                statusActive.checked = true;
+
+                // Hide Reset Password
+                resetPassContainer.style.display = 'none';
+                resetPassInput.checked = false;
+
+                modalTitle.innerText = "Add New Employee";
+                modal.style.display = 'flex';
+            });
+        }
+
+        // --- TABLE ACTIONS ---
+        tableBody.addEventListener('click', (e) => {
+            const editBtn = e.target.closest('.edit-btn');
+            const deleteBtn = e.target.closest('.delete-btn');
+            const row = e.target.closest('tr[data-href]');
+
+            // EDIT CLICK
+            if (editBtn) {
+                e.stopPropagation();
+
+                idInput.value = editBtn.dataset.id;
+                nameInput.value = editBtn.dataset.name;
+                emailInput.value = editBtn.dataset.email;
+                roleInput.value = editBtn.dataset.role;
+
+                // Show Status Radio Buttons
+                statusContainer.style.display = 'block';
+
+                // Set Correct Radio Button
+                if (editBtn.dataset.status === 'Active') {
+                    statusActive.checked = true;
+                } else {
+                    statusInactive.checked = true;
                 }
 
+                // Show Reset Password
+                resetPassContainer.style.display = 'block';
+                resetPassInput.checked = false;
 
-                
+                modalTitle.innerText = "Edit Employee";
+                modal.style.display = 'flex';
+            }
 
-                    // Modal Logic
-                    const openModal = () => {
-                        modal.style.display = 'flex';
-                    };
-                    const closeModal = () => {
-                        modal.style.display = 'none';
-                    };
+            // DELETE CLICK
+            else if (deleteBtn) {
+                e.stopPropagation();
 
-                    // ADD BUTTON CLICK
-                    document.getElementById('addEmployeeBtn').addEventListener('click', () => {
-                        idInput.value = '';
-                        nameInput.value = '';
-                        emailInput.value = '';
-
-                        // Hide reset password option (new users get default pass anyway)
-                        resetPassContainer.style.display = 'none';
-                        resetPassInput.checked = false;
-
-                        modalTitle.innerText = "Add New Employee";
-                        openModal();
-                    });
-
-                    document.querySelector('.close-modal-btn').addEventListener('click', closeModal);
-                    document.querySelector('.btn-cancel').addEventListener('click', closeModal);
-
-                    // TABLE ACTIONS
-                    tableBody.addEventListener('click', (e) => {
-                        const editBtn = e.target.closest('.edit-btn');
-                        const deleteBtn = e.target.closest('.delete-btn');
-
-                        // EDIT CLICK
-                        if (editBtn) {
-                            idInput.value = editBtn.dataset.id;
-                            nameInput.value = editBtn.dataset.name;
-                            emailInput.value = editBtn.dataset.email;
-
-                            // Show reset password option
-                            resetPassContainer.style.display = 'block';
-                            resetPassInput.checked = false; // Always unchecked when opening
-
-                            modalTitle.innerText = "Edit Employee";
-                            openModal();
-                        }
-
-                        // DELETE CLICK
-                        else if (deleteBtn) {
-                            const id = deleteBtn.dataset.id;
-                            Swal.fire({
-                                title: 'Remove Employee?',
-                                text: "They will no longer be able to log in.",
-                                icon: 'warning',
-                                showCancelButton: true,
-                                confirmButtonColor: '#d33',
-                                confirmButtonText: 'Yes, remove'
-                            }).then(async (result) => {
-                                if (result.isConfirmed) {
-                                    try {
-                                        const response = await fetch(`/employees/${id}`, {
-                                            method: 'DELETE',
-                                            headers: {
-                                                'X-CSRF-TOKEN': csrfToken
-                                            }
-                                        });
-
-                                        if (response.ok) {
-                                            Swal.fire({
-                                                    title: 'Deleted!',
-                                                    text: result.message,
-                                                    icon: 'success',
-                                                    timer: 1500,
-                                                    showConfirmButton: false
-                                                })
-                                                .then(() => window.location.reload());
-                                        } else {
-                                            Swal.fire('Error', 'Could not delete.', 'error');
-                                        }
-                                    } catch (error) {
-                                        console.error(error);
-                                    }
+                const id = deleteBtn.dataset.id;
+                Swal.fire({
+                    title: 'Delete Permanently?',
+                    text: "This action cannot be undone.",
+                    icon: 'error',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    confirmButtonText: 'Yes, delete'
+                }).then(async (result) => {
+                    if (result.isConfirmed) {
+                        try {
+                            const response = await fetch(`/employees/${id}`, {
+                                method: 'DELETE',
+                                headers: {
+                                    'X-CSRF-TOKEN': csrfToken
                                 }
                             });
-                        }
-
-                        else {
-                        const row = e.target.closest('tr[data-href]');
-                        if (row) {
-                            window.location.href = row.dataset.href;
-                        }
-                    }
-                    });
-
-                    // SAVE BUTTON CLICK
-                    document.querySelector('.btn-save').addEventListener('click', async (e) => {
-                        e.preventDefault();
-
-                        const id = idInput.value;
-
-                        const data = {
-                            name: nameInput.value,
-                            position: 'Employee', // Default role
-                            email: emailInput.value,
-                            // Send the reset flag
-                            reset_password: resetPassInput.checked
-                        };
-
-                        let url = "{{ route('employees.store') }}";
-                        let method = "POST";
-
-                        if (id) {
-                            url = `/employees/${id}`;
-                            method = "PUT";
-                        }
-
-                        try {
-                            const response = await fetch(url, {
-                                method: method,
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'Accept': 'application/json',
-                                    'X-CSRF-TOKEN': csrfToken
-                                },
-                                body: JSON.stringify(data)
-                            });
-
-                            const result = await response.json();
 
                             if (response.ok) {
-                                closeModal();
                                 Swal.fire({
-                                    title: 'Success',
-                                    text: result.message,
-                                    icon: 'success',
-                                    timer: 1500,
-                                    showConfirmButton: false
-                                }).then(() => window.location.reload());
+                                        title: 'Deleted!',
+                                        text: 'Employee removed.',
+                                        icon: 'success',
+                                        timer: 1500,
+                                        showConfirmButton: false
+                                    })
+                                    .then(() => window.location.reload());
                             } else {
-                                Swal.fire('Error', result.message || 'Validation failed', 'error');
+                                Swal.fire('Error', 'Could not delete.', 'error');
                             }
                         } catch (error) {
                             console.error(error);
-                            Swal.fire('Error', 'System error occurred', 'error');
                         }
-                    });
+                    }
                 });
+            }
+
+            // ROW CLICK
+            else if (row) {
+                window.location.href = row.dataset.href;
+            }
+        });
+
+        // --- SAVE BUTTON ---
+        document.querySelector('.btn-save').addEventListener('click', async (e) => {
+            e.preventDefault();
+
+            const id = idInput.value;
+            const statusValue = document.querySelector('input[name="status"]:checked').value;
+
+            const data = {
+                name: nameInput.value,
+                email: emailInput.value,
+                role: roleInput.value,
+                status: statusValue,
+                reset_password: resetPassInput.checked
+            };
+
+            let url = "{{ route('employees.store') }}";
+            let method = "POST";
+
+            if (id) {
+                // Using template literal with backticks for JS
+                url = `/employees/${id}`;
+                method = "PUT";
+            }
+
+            try {
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    closeModal();
+                    Swal.fire({
+                        title: 'Success',
+                        text: result.message,
+                        icon: 'success',
+                        timer: 1500,
+                        showConfirmButton: false
+                    }).then(() => window.location.reload());
+                } else {
+                    Swal.fire('Error', result.message || 'Validation failed', 'error');
+                }
+            } catch (error) {
+                console.error(error);
+                Swal.fire('Error', 'System error occurred', 'error');
+            }
+        });
+    });
 </script>
 @endpush

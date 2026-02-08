@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Employees')
+@section('title', 'Employee Profile')
 
 @push('styles')
 <style>
@@ -24,6 +24,9 @@
         padding: 24px;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         border: 1px solid #e2e8f0;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
     }
 
     .card-title-row {
@@ -33,7 +36,7 @@
         font-size: 1.1rem;
         font-weight: 600;
         color: #1e293b;
-        margin-bottom: 24px;
+        margin-bottom: 5px;
         padding-bottom: 15px;
         border-bottom: 1px solid #f1f5f9;
     }
@@ -43,7 +46,6 @@
         display: flex;
         align-items: center;
         gap: 15px;
-        margin-bottom: 20px;
     }
 
     .info-icon-circle {
@@ -115,6 +117,23 @@
         background-color: #d1fae5;
         color: #065f46;
     }
+    
+    .badge-inactive {
+        background-color: #fee2e2;
+        color: #991b1b;
+    }
+
+    /* Form Styles */
+    .input-group label { display: block; margin-bottom: 5px; font-weight: 500; color: #475569; }
+    .input-group input, .input-group select {
+        width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px;
+    }
+    
+    .radio-group { display: flex; gap: 15px; margin-top: 5px; }
+    .radio-label { display: flex; align-items: center; gap: 5px; cursor: pointer; }
+    .radio-label input { width: auto; margin-right: 5px;}
+    
+    .helper-text { font-size: 0.8rem; color: #64748b; margin-top: 4px; }
 </style>
 @endpush
 
@@ -125,16 +144,19 @@
             <i class="fas fa-arrow-left"></i> Back to Employees
         </a>
         <div style="display: flex; align-items: center; gap: 10px;">
-            <h2 style="margin:0;">{{ $employee->name }}</h2>
-            <span class="header-badge badge-active">Active</span>
+            <h2 style="margin:0;" id="headerName">{{ $employee->name }}</h2>
+            <span id="headerStatusBadge" class="header-badge {{ $employee->status === 'Active' ? 'badge-active' : 'badge-inactive' }}">
+                {{ $employee->status }}
+            </span>
         </div>
-        <!-- <p style="margin-top: 5px; color: #64748b;"> Software Engineer • IT Department</p> -->
     </div>
     <div style="display: flex; gap: 10px;">
         <button id='editProfileBtn' class="btn-cancel" style="background: white;"
             data-id="{{ $employee->id }}"
             data-name="{{ $employee->name }}"
-            data-email="{{ $employee->email }}">
+            data-email="{{ $employee->email }}"
+            data-role="{{ $employee->role }}"
+            data-status="{{ $employee->status }}">
             <i class="fas fa-pen" style="margin-right: 5px;"></i> Edit Profile
         </button>
 
@@ -146,7 +168,7 @@
 
 <div class="employee-profile-grid">
 
-    <div class="stat-card" style="display: block;">
+    <div class="stat-card">
         <div class="card-title-row">
             <i class="far fa-user"></i>
             <span>Personal Info</span>
@@ -158,7 +180,7 @@
             </div>
             <div class="info-content">
                 <label class="info-label">Full Name</label>
-                <div id="full-name" class="info-value">{{ $employee->name }}</div>
+                <div id="display-name" class="info-value">{{ $employee->name }}</div>
             </div>
         </div>
 
@@ -168,50 +190,51 @@
             </div>
             <div class="info-content">
                 <label class="info-label">Email Address</label>
-                <div class="text-green">{{ $employee->email }}</div>
+                <div id="display-email" class="text-green">{{ $employee->email }}</div>
+            </div>
+        </div>
+        
+        <div class="info-group">
+            <div class="info-icon-circle">
+                <i class="fas fa-id-badge"></i>
+            </div>
+            <div class="info-content">
+                <label class="info-label">Username</label>
+                <div class="info-value">{{ $employee->username }}</div>
             </div>
         </div>
     </div>
 
-    <div class="stat-card" style="display: block;">
+    <div class="stat-card">
         <div class="card-title-row">
             <i class="fas fa-shield-alt"></i>
             <span>Role & Status</span>
         </div>
 
-        <div class="role-grid">
-            <div class="input-group">
-                <label class="info-label">Department</label>
-                <input type="text" value="Engineering" readonly style="background-color: #f8fafc;">
-            </div>
-
-            <div class="input-group">
-                <label class="info-label">Position</label>
-                <input type="text" value="Senior Developer" readonly style="background-color: #f8fafc;">
-            </div>
+        <div class="input-group">
+            <label class="info-label">Assigned Role</label>
+            <input type="text" id="display-role-input" value="{{ $employee->role }}" readonly style="background-color: #f8fafc; font-weight: 600; color: #334155;">
         </div>
 
-        <div class="input-group" style="margin-top: 20px;">
+        <div class="input-group">
             <label class="info-label">Date Joined</label>
-            <div class="input-with-icon">
-                <!-- <i class="far fa-calendar-alt"></i> -->
-                <input type="text" value="{{ $employee->created_at->format('M d, Y') }}" readonly style="background-color: #f8fafc;">
-            </div>
+            <input type="text" value="{{ $employee->created_at->format('M d, Y') }}" readonly style="background-color: #f8fafc;">
         </div>
 
-        <div class="input-group" style="margin-top: 20px;">
+        <div class="input-group">
             <label class="info-label">Employee ID</label>
-            <div style="color: #64748b;">{{ sprintf('#EMP-%03d', $employee->id) }}</div>
+            <div style="color: #64748b; font-family: monospace; font-size: 1rem; padding: 10px; background: #f8fafc; border-radius: 6px; border: 1px solid #e2e8f0;">
+                {{ sprintf('#EMP-%03d', $employee->id) }}
+            </div>
         </div>
     </div>
 
 </div>
 
-
-<div class="modal-overlay" id="employeeModal">
+<div class="modal-overlay" id="employeeModal" style="display: none;">
     <div class="modal-box">
         <div class="modal-header">
-            <h3 id="modalTitle">Add New Employee</h3>
+            <h3 id="modalTitle">Edit Employee</h3>
             <span class="close-modal-btn">&times;</span>
         </div>
 
@@ -220,22 +243,50 @@
 
             <div class="input-group">
                 <label>Employee Name</label>
-                <input type="text" id="name" placeholder="e.g. John Doe" required>
+                <input type="text" id="name" required>
             </div>
 
             <div class="input-group">
                 <label>Email Address</label>
-                <input type="email" id="email" placeholder="contact@company.com" required>
+                <input type="email" id="email" required>
             </div>
-            <div class="input-group" id="resetPasswordContainer" style="display: none; margin-top: 15px;">
+
+            <div class="input-group">
+                <label>Role / Access Level</label>
+                <select id="role" required>
+                    <option value="" disabled selected>Select a Role</option>
+                    <option value="Operations Manager">Operations Manager</option>
+                    <option value="Head Landscaper">Head Landscaper</option>
+                    <option value="Field Crew">Field Crew</option>
+                </select>
+                <p class="helper-text">* Field Crew members cannot log in to the dashboard.</p>
+            </div>
+
+            <div class="input-group" style="margin-top: 15px; padding-top: 10px; border-top: 1px dashed #ddd;">
+                <label style="font-weight: bold;">Account Status</label>
+                <div class="radio-group">
+                    <label class="radio-label">
+                        <input type="radio" name="status" value="Active" id="statusActive">
+                        <span style="color: #065f46; font-weight: 600;">{{ $employee->status == 'Active' ? 'Active' : 'Activate' }}</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="status" value="Inactive" id="statusInactive">
+                        <span style="color: #991b1b;">{{ $employee->status == 'Inactive' ? 'Inactive' : 'Deactivate' }}</span>
+                    </label>
+                </div>
+                <p class="helper-text">Inactive users cannot log in.</p>
+            </div>
+
+            <div class="input-group" id="resetPasswordContainer" style="margin-top: 15px;">
                 <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
                     <input type="checkbox" id="reset_password" style="width: auto;">
                     <span style="font-size: 0.9rem;">Reset Password to "password123"</span>
                 </label>
             </div>
+
             <div class="modal-actions">
-                <button type="button" class="btn-cancel">Cancel</button>
-                <button type="submit" class="btn-save">Save Employee</button>
+                <button type="button" class="btn-cancel btn-cancel-modal">Cancel</button>
+                <button type="submit" class="btn-save">Save Changes</button>
             </div>
         </form>
     </div>
@@ -245,81 +296,73 @@
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', () => {
-        console.log("Employee Profile Script Loaded"); // Debug check
-
-        // --- 1. VARIABLES ---
+        // Variables
         const modal = document.getElementById('employeeModal');
-        const modalTitle = document.getElementById('modalTitle');
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
-        // Form Inputs
         const nameInput = document.getElementById('name');
         const emailInput = document.getElementById('email');
+        const roleInput = document.getElementById('role');
         const idInput = document.getElementById('emp_id');
-        const resetPassContainer = document.getElementById('resetPasswordContainer');
+        
+        const statusActive = document.getElementById('statusActive');
+        const statusInactive = document.getElementById('statusInactive');
         const resetPassInput = document.getElementById('reset_password');
 
-        // Display Elements
+        // Display Elements for real-time update
         const headerName = document.getElementById('headerName');
+        const headerStatusBadge = document.getElementById('headerStatusBadge');
         const displayName = document.getElementById('display-name');
         const displayEmail = document.getElementById('display-email');
+        const displayRoleInput = document.getElementById('display-role-input');
 
         // Buttons
         const editBtn = document.getElementById('editProfileBtn');
-        const deleteBtn = document.getElementById('deleteEmployeeBtn');
         const saveBtn = document.querySelector('.btn-save');
-        
-        // Modal Close Buttons
         const closeModalBtn = document.querySelector('.close-modal-btn');
-        // MAKE SURE your HTML Cancel button has class 'btn-cancel-modal'
-        const cancelModalBtn = document.querySelector('.btn-cancel-modal'); 
+        const cancelModalBtn = document.querySelector('.btn-cancel-modal');
 
-        // --- 2. MODAL HELPERS ---
-        const openModal = () => { 
-            if(modal) modal.style.display = 'flex'; 
-        };
-        const closeModal = () => { 
-            if(modal) modal.style.display = 'none'; 
-        };
+        // Modal Logic
+        const openModal = () => { modal.style.display = 'flex'; };
+        const closeModal = () => { modal.style.display = 'none'; };
 
-        // --- 3. EVENT LISTENERS (With Safety Checks) ---
-
-        // Close Handlers
         if (closeModalBtn) closeModalBtn.addEventListener('click', closeModal);
         if (cancelModalBtn) cancelModalBtn.addEventListener('click', closeModal);
-        window.onclick = (e) => { if (e.target === modal) closeModal(); };
 
-        // EDIT BUTTON LOGIC
+        // Edit Button Click
         if (editBtn) {
             editBtn.addEventListener('click', () => {
-                console.log("Edit Button Clicked");
-                // Populate fields
-                if(idInput) idInput.value = editBtn.dataset.id;
-                if(nameInput) nameInput.value = editBtn.dataset.name;
-                if(emailInput) emailInput.value = editBtn.dataset.email;
+                // Populate Inputs
+                idInput.value = editBtn.dataset.id;
+                nameInput.value = editBtn.dataset.name;
+                emailInput.value = editBtn.dataset.email;
+                roleInput.value = editBtn.dataset.role;
 
-                // Reset Password Logic
-                if(resetPassContainer) resetPassContainer.style.display = 'block';
-                if(resetPassInput) resetPassInput.checked = false;
+                // Set Status Radio
+                if (editBtn.dataset.status === 'Active') {
+                    statusActive.checked = true;
+                } else {
+                    statusInactive.checked = true;
+                }
 
-                if(modalTitle) modalTitle.innerText = "Edit Employee";
+                resetPassInput.checked = false;
                 openModal();
             });
-        } else {
-            console.error("Edit Button (id='editProfileBtn') not found!");
         }
 
-        // SAVE BUTTON LOGIC
+        // Save Button Click
         if (saveBtn) {
             saveBtn.addEventListener('click', async (e) => {
                 e.preventDefault();
                 const id = idInput.value;
+                const statusValue = document.querySelector('input[name="status"]:checked').value;
 
                 const data = {
                     name: nameInput.value,
-                    position: 'Employee',
                     email: emailInput.value,
-                    reset_password: resetPassInput ? resetPassInput.checked : false
+                    role: roleInput.value,
+                    status: statusValue,
+                    reset_password: resetPassInput.checked
                 };
 
                 try {
@@ -336,26 +379,40 @@
                     const result = await response.json();
 
                     if (response.ok) {
-                        // Update UI
-                        if(headerName) headerName.innerText = data.name;
-                        if(displayName) displayName.innerText = data.name;
-                        if(displayEmail) displayEmail.innerText = data.email;
-
-                        // Update Button Data
-                        if(editBtn) {
-                            editBtn.dataset.name = data.name;
-                            editBtn.dataset.email = data.email;
+                        // Update UI Elements Immediately
+                        headerName.innerText = data.name;
+                        displayName.innerText = data.name;
+                        displayEmail.innerText = data.email;
+                        displayRoleInput.value = data.role;
+                        
+                        // Update Header Badge
+                        headerStatusBadge.innerText = data.status;
+                        if (data.status === 'Active') {
+                            headerStatusBadge.classList.remove('badge-inactive');
+                            headerStatusBadge.classList.add('badge-active');
+                        } else {
+                            headerStatusBadge.classList.remove('badge-active');
+                            headerStatusBadge.classList.add('badge-inactive');
                         }
+
+                        // Update Edit Button Data Attributes
+                        editBtn.dataset.name = data.name;
+                        editBtn.dataset.email = data.email;
+                        editBtn.dataset.role = data.role;
+                        editBtn.dataset.status = data.status;
 
                         closeModal();
 
                         Swal.fire({
                             title: 'Success',
-                            text: result.message,
+                            text: 'Profile updated successfully',
                             icon: 'success',
                             timer: 1500,
                             showConfirmButton: false
-                        }).then(() => window.location.reload());
+                        }).then(() => {
+                            // AUTO RELOAD ADDED HERE
+                            window.location.reload();
+                        });
                     } else {
                         Swal.fire('Error', result.message || 'Validation failed', 'error');
                     }
@@ -365,12 +422,12 @@
                 }
             });
         }
-
-        // DELETE BUTTON LOGIC
+        
+        // Delete Logic
+        const deleteBtn = document.getElementById('deleteEmployeeBtn');
         if (deleteBtn) {
             deleteBtn.addEventListener('click', () => {
                 const id = deleteBtn.dataset.id;
-
                 Swal.fire({
                     title: 'Remove Employee?',
                     text: "This action cannot be undone.",
@@ -387,21 +444,13 @@
                             });
 
                             if (response.ok) {
-                                Swal.fire({
-                                    title: 'Deleted!',
-                                    text: 'Employee removed. Redirecting...',
-                                    icon: 'success',
-                                    timer: 1500,
-                                    showConfirmButton: false
-                                }).then(() => {
-                                    window.location.href = "{{ route('employees') }}";
-                                });
+                                Swal.fire({ title:'Deleted!', text:'Employee removed.', icon:'success', timer: 1500, showConfirmButton: false })
+                                    .then(() => window.location.href = "{{ route('employees') }}");
                             } else {
                                 Swal.fire('Error', 'Could not delete.', 'error');
                             }
                         } catch (error) {
                             console.error(error);
-                            Swal.fire('Error', 'System error occurred', 'error');
                         }
                     }
                 });

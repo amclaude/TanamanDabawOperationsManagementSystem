@@ -3,65 +3,162 @@
 @section('title', 'Projects | Tanaman')
 
 @push('styles')
-{{-- TomSelect CSS --}}
 <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
-
 <style>
-    .swal2-container {
-        z-index: 20000 !important;
+    .swal2-container { z-index: 20000 !important; }
+    
+    .btn-primary, .btn-danger { 
+        padding: 8px 16px; display: inline-flex; align-items: center; justify-content: center; 
+        gap: 6px; border: none; cursor: pointer; color: white; border-radius: 6px; font-size: 0.9em; font-weight: 500;
+        transition: background-color 0.2s;
+    }
+    .btn-primary { background-color: #319B72; }
+    .btn-primary:hover { background-color: #267a59; }
+    .btn-danger { background-color: #ef4444; }
+    .btn-danger:hover { background-color: #dc2626; }
+    
+    .status-badge { padding: 4px 10px; border-radius: 20px; font-size: 0.8em; font-weight: 600; }
+    .status-badge.active { background-color: #dcfce7; color: #166534; }
+    .status-badge.completed { background-color: #059669; color: #fff; }
+    
+    tr[data-href] { cursor: pointer; transition: background-color 0.1s; }
+    tr[data-href]:hover { background-color: #f8fafc; }
+
+    .modal-overlay {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.5); display: none; 
+        justify-content: center; align-items: center; z-index: 1000;
     }
 
-    /* Specific styles for Projects page */
-    .btn-primary,
-    .btn-danger {
-        padding: 8px 12px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 5px;
-        border: none;
-        cursor: pointer;
-        color: white;
-        border-radius: 4px;
-    }
-
-    .btn-primary {
-        background-color: #319B72;
-    }
-
-    .btn-danger {
-        background-color: #d33;
-    }
-
-    .status-badge {
-        padding: 4px 8px;
+    .modal-box {
+        width: 100%;
+        max-width: 500px;
+        background: #fff;
         border-radius: 12px;
-        font-size: 0.85em;
-        font-weight: 500;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        max-height: 90vh;
     }
 
-    .status-badge.active {
-        background-color: #e6f4ea;
-        color: #1e7e34;
+    .modal-header {
+        padding: 16px 20px 0;
+        background: #fff;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .modal-header h3 { margin: 0; font-size: 1.1rem; color: #1e293b; font-weight: 700; }
+    .close-modal-btn { font-size: 1.5rem; color: #94a3b8; cursor: pointer; line-height: 1; }
+    .close-modal-btn:hover { color: #475569; }
+
+    .modal-tabs {
+        display: flex;
+        border-bottom: 1px solid #e2e8f0;
+        padding: 0 20px;
+        margin-top: 12px;
     }
 
-    .status-badge.completed {
-        background-color: #059669;
-        color: #fff;
-    }
-
-    tr[data-href] {
+    .tab-btn {
+        padding: 10px 16px;
         cursor: pointer;
+        font-weight: 600;
+        color: #64748b;
+        border-bottom: 2px solid transparent;
+        font-size: 0.85rem;
+        transition: all 0.2s;
     }
 
-    tr[data-href]:hover {
-        background-color: #f9f9f9;
+    .tab-btn:hover { color: #319B72; }
+    .tab-btn.active { color: #319B72; border-bottom-color: #319B72; }
+
+    .modal-content-wrapper {
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+        flex: 1;
+    }
+    /* #tab-general { overflow-y: auto; height: 52vh;} */
+
+    .modal-form-content {
+        padding: 16px 20px;
+        flex: 1;
+    }
+
+    .tab-pane { display: none; animation: fadeIn 0.2s ease-in-out; }
+    .tab-pane.active { display: block; }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+    .modal-actions {
+        padding: 16px 20px;
+        border-top: 1px solid #e2e8f0;
+        background: #f8fafc;
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+    }
+
+    .input-group { margin-bottom: 14px; }
+    .input-group:last-child { margin-bottom: 0; }
+    .input-group label {
+        display: block; margin-bottom: 5px; font-weight: 500; color: #475569; font-size: 0.85em;
+    }
+    .input-group input, .input-group textarea, .input-group select {
+        width: 100%; padding: 9px 11px; 
+        border: 1px solid #cbd5e1; border-radius: 6px; 
+        font-size: 0.9em; background-color: #fff;
+        transition: border-color 0.2s;
+    }
+    .input-group input:focus, .input-group textarea:focus, .input-group select:focus {
+        border-color: #319B72; outline: none;
+    }
+    .input-group input[readonly] { background-color: #f1f5f9; color: #64748b; cursor: default; }
+    
+    /* Tom Select locked state */
+    .ts-wrapper.locked {
+        pointer-events: none;
+        opacity: 0.7;
+    }
+    
+    .ts-wrapper.locked .ts-control {
+        background-color: #f1f5f9 !important;
+        color: #64748b !important;
+        cursor: default !important;
+        border-color: #cbd5e1 !important;
+    }
+
+    .compact-row {
+        display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+    }
+
+    .quote-select-container {
+        background: #f0fdf4; border: 1px solid #bbf7d0; 
+        padding: 12px; border-radius: 8px; margin-bottom: 16px;
+    }
+    .quote-label { color: #166534; font-weight: 600; font-size: 0.85em; margin-bottom: 8px; display: block; }
+
+    .btn-cancel {
+        background: white; 
+        border: 1px solid #cbd5e1; 
+        color: #475569; 
+        padding: 8px 16px; 
+        border-radius: 6px; 
+        cursor: pointer;
+        font-size: 0.9em;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+
+    .btn-cancel:hover {
+        background: #f8fafc;
+        border-color: #94a3b8;
     }
 </style>
 @endpush
 
 @section('content')
-{{-- Page Header --}}
 <div class="page-header">
     <div>
         <h2>Projects</h2>
@@ -80,13 +177,14 @@
     </div>
 </div>
 
-{{-- Projects Table --}}
 <div class="table-container">
     <table class="data-table">
         <thead>
             <tr>
                 <th>Project Name</th>
                 <th>Client</th>
+                <th>Head Landscaper</th>
+                <th>Crew</th>
                 <th>Status</th>
                 <th>Deadline</th>
                 <th>Budget</th>
@@ -98,105 +196,141 @@
             <tr data-href="{{ route('projects.panel', $project->id) }}">
                 <td>{{ $project->project_name }}</td>
                 <td>{{ $project->client->name ?? 'N/A' }}</td>
+                <td>{{ $project->headLandscaper->name ?? 'Unassigned' }}</td>
                 <td>
-                    <span class="status-badge {{ $project->is_active ? 'active' : 'active' }}">
+                    <span class="badge" style="background: #f1f5f9; color: #475569; padding: 2px 8px; border-radius: 6px; font-size: 0.8em;">
+                        {{ $project->fieldCrew->count() }} Members
+                    </span>
+                </td>
+                <td>
+                    <span class="status-badge {{ $project->is_active ? 'active' : 'completed' }}">
                         {{ $project->is_active ? 'Active' : 'Done' }}
                     </span>
                 </td>
                 <td>{{ $project->project_end_date }}</td>
                 <td>₱{{ number_format($project->project_budget, 2) }}</td>
-
                 <td>
                     <button class="btn-primary edit-btn"
-                        title="Edit Project"
                         data-id="{{ $project->id }}"
                         data-name="{{ $project->project_name }}"
-                        data-client-id="{{ $project->client_id ?? '' }}"
+                        data-client-id="{{ $project->client_id }}"
                         data-quote-id="{{ $project->quote_id }}"
                         data-deadline="{{ $project->project_end_date }}"
-                        data-budget="{{ $project->project_budget }}">
+                        data-budget="{{ $project->project_budget }}"
+                        data-location="{{ $project->project_location }}"
+                        data-description="{{ $project->project_description }}"
+                        data-head-id="{{ $project->head_landscaper_id }}"
+                        data-crew="{{ $project->fieldCrew->pluck('id') }}">
                         <i class="fas fa-edit"></i>
                     </button>
-
-                    <button class="btn-danger delete-btn"
-                        title="Delete Project"
-                        data-id="{{ $project->id }}">
-                        <i class="fas fa-trash"></i>
-                    </button>
+                    <button class="btn-danger delete-btn" data-id="{{ $project->id }}"><i class="fas fa-trash"></i></button>
                 </td>
             </tr>
             @empty
-            <tr>
-                <td colspan="6" style="text-align: center; padding: 40px; color: #64748b;">
-                    No projects found.
-                </td>
-            </tr>
+            <tr><td colspan="8" style="text-align: center; padding: 40px; color: #64748b;">No projects found.</td></tr>
             @endforelse
         </tbody>
     </table>
-    <div style="margin-top: 20px;">
-        {{ $projects->links() }}
-    </div>
+    <div style="margin-top: 20px;">{{ $projects->links() }}</div>
 </div>
 
-{{-- Add/Edit Project Modal --}}
 <div class="modal-overlay" id="addProjectModal">
     <div class="modal-box">
         <div class="modal-header">
             <h3 id="modalTitle">Add New Project</h3>
             <span class="close-modal-btn" id="closeProjectModal">&times;</span>
         </div>
-        <form class="modal-form" id="createProjectForm">
+
+        <div class="modal-tabs">
+            <div class="tab-btn active" onclick="switchTab('general')">General Info</div>
+            <div class="tab-btn" onclick="switchTab('team')">Team Assignment</div>
+        </div>
+        
+        <form id="projectForm" novalidate style="display: flex; flex-direction: column; flex: 1; overflow: hidden;">
             <input type="hidden" id="project_id">
 
-            <div class="input-group" id="quoteContainer" style="background: #f8fafc; padding: 10px; border: 1px dashed #cbd5e1; border-radius: 6px; margin-bottom: 15px;">
-                <label style="color: #334155; font-weight: 600;">Link to Quote (Optional)</label>
+            <div class="modal-content-wrapper">
+                <div class="modal-form-content">
+                    <div id="tab-general" class="tab-pane active">
+                        <div id="quoteContainer" class="quote-select-container">
+                            <label class="quote-label">Link to Quote (Optional)</label>
+                            <select id="p_quote" placeholder="Search for a quote...">
+                                <option value="">-- No Quote (Manual Entry) --</option>
+                                @foreach($pendingQuotes as $quote)
+                                <option value="{{ $quote->id }}"
+                                    data-client="{{ $quote->client_id }}"
+                                    data-budget="{{ $quote->total_amount }}"
+                                    data-subject="{{ $quote->subject }}">
+                                    #{{ $quote->id }} — {{ $quote->subject }} (₱{{ number_format($quote->total_amount) }})
+                                </option>
+                                @endforeach
+                            </select>
+                        </div>
 
-                {{-- Added 'placeholder' for Tom Select --}}
-                <select id="p_quote" placeholder="Search for a quote...">
-                    <option value="">-- No Quote (Manual Entry) --</option>
-                    @if(isset($pendingQuotes))
-                    @foreach($pendingQuotes as $quote)
-                    <option value="{{ $quote->id }}"
-                        data-client="{{ $quote->client_id }}"
-                        data-budget="{{ $quote->total_amount }}"
-                        data-subject="{{ $quote->subject }}">
-                        Quote #{{ str_pad($quote->id, 4, '0', STR_PAD_LEFT) }} — {{ $quote->subject }} (₱{{ number_format($quote->total_amount) }})
-                    </option>
-                    @endforeach
-                    @endif
-                </select>
-                <small style="color: #64748b; font-size: 0.8em;">Selecting a quote auto-fills Client & Budget</small>
-            </div>
+                        <div class="input-group">
+                            <label>Project Name</label>
+                            <input type="text" id="p_name" placeholder="e.g. Backyard Renovation" required>
+                        </div>
 
-            <div class="input-group">
-                <label>Project Name</label>
-                <input type="text" id="p_name" placeholder="e.g. Garden Redesign" required>
-            </div>
+                        <div class="compact-row">
+                            <div class="input-group">
+                                <label>Client</label>
+                                <select id="p_client" required>
+                                    <option value="">Select Client...</option>
+                                    @foreach($clients as $client)
+                                    <option value="{{ $client->id }}">{{ $client->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label>Location</label>
+                                <input type="text" id="p_location" placeholder="Address" required>
+                            </div>
+                        </div>
 
-            <div class="input-group">
-                <label>Client</label>
-                <select id="p_client" placeholder="Select a client..." autocomplete="off">
-                    <option value="">Select a client...</option>
-                    @foreach($clients as $client)
-                    <option value="{{ $client->id }}">{{ $client->name }}</option>
-                    @endforeach
-                </select>
-            </div>
+                        <div class="compact-row">
+                            <div class="input-group">
+                                <label>Deadline</label>
+                                <input type="date" id="p_deadline" required>
+                            </div>
+                            <div class="input-group">
+                                <label>Budget (₱)</label>
+                                <input type="number" id="p_budget" step="0.01" min="0" required>
+                            </div>
+                        </div>
 
-            <div class="input-group">
-                <label>Deadline</label>
-                <input type="date" id="p_deadline" required>
-            </div>
+                        <div class="input-group">
+                            <label>Description</label>
+                            <textarea id="p_description" rows="2" placeholder="Brief scope of work..."></textarea>
+                        </div>
+                    </div>
 
-            <div class="input-group">
-                <label>Budget (₱)</label>
-                <input type="number" id="p_budget" min="0" placeholder="e.g. 5000" step="0.01" required>
+                    <div id="tab-team" class="tab-pane">
+                        <div class="input-group">
+                            <label>Head Landscaper</label>
+                            <select id="p_head">
+                                <option value="">Select Head...</option>
+                                @foreach($workers->where('role', 'Head Landscaper') as $worker)
+                                <option value="{{ $worker->id }}">{{ $worker->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="input-group">
+                            <label>Field Crew</label>
+                            <select id="p_crew" multiple placeholder="Select Crew...">
+                                @foreach($workers->where('role', 'Field Crew') as $worker)
+                                <option value="{{ $worker->id }}">{{ $worker->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="modal-actions">
                 <button type="button" class="btn-cancel">Cancel</button>
-                <button type="submit" class="btn-save">Save Project</button>
+                <button type="submit" class="btn-primary">Save Project</button>
             </div>
         </form>
     </div>
@@ -204,318 +338,213 @@
 @endsection
 
 @push('scripts')
-{{-- TomSelect JS --}}
 <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
 <script>
-    let clientSelect;
-    let quoteSelect;
+    let clientSelect, quoteSelect, headSelect, crewSelect;
+
+    function switchTab(tabName) {
+        document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+        
+        document.getElementById('tab-' + tabName).classList.add('active');
+        event.target.classList.add('active');
+        console.log(tabName)
+        if (tabName === 'team') {
+            document.querySelector('.modal-content-wrapper').style.overflow = 'visible';
+        } else {
+            document.querySelector('.modal-content-wrapper').style.overflow = 'auto';
+        }
+    }
+
+    function lockClientSelect() {
+        // Lock the client select dropdown
+        clientSelect.lock();
+        clientSelect.wrapper.classList.add('locked');
+    }
+
+    function unlockClientSelect() {
+        // Unlock the client select dropdown
+        clientSelect.unlock();
+        clientSelect.wrapper.classList.remove('locked');
+    }
 
     document.addEventListener('DOMContentLoaded', function() {
+        clientSelect = new TomSelect("#p_client", { placeholder: "Select Client" });
+        headSelect = new TomSelect("#p_head", { placeholder: "Select Head" });
+        crewSelect = new TomSelect("#p_crew", { plugins: ['remove_button'], placeholder: "Add Crew Members" });
+        
+        quoteSelect = new TomSelect("#p_quote", {
+            placeholder: "Select a quote...",
+            onChange: function(value) {
+                const opt = document.querySelector(`#p_quote option[value="${value}"]`);
+                if (value && opt) {
+                    document.getElementById('p_name').value = opt.dataset.subject;
+                    document.getElementById('p_budget').value = opt.dataset.budget;
+                    clientSelect.setValue(opt.dataset.client);
+                    
+                    document.getElementById('p_name').readOnly = true;
+                    document.getElementById('p_budget').readOnly = true;
+                    lockClientSelect();
+                } else {
+                    document.getElementById('p_name').readOnly = false;
+                    document.getElementById('p_budget').readOnly = false;
+                    unlockClientSelect();
+                    clientSelect.clear();
+                }
+            }
+        });
+    });
 
-        // 1. Initialize Client Dropdown
-        if (document.getElementById('p_client')) {
-            clientSelect = new TomSelect("#p_client", {
-                create: false,
-                sortField: {
-                    field: "text",
-                    direction: "asc"
-                },
-                placeholder: "Select a Client..."
-            });
+    const modal = document.getElementById('addProjectModal');
+    const form = document.getElementById('projectForm');
+    
+    document.getElementById('addProjectBtn').addEventListener('click', () => {
+        form.reset();
+        document.getElementById('project_id').value = '';
+        
+        quoteSelect.clear();
+        unlockClientSelect();
+        clientSelect.clear();
+        headSelect.clear();
+        crewSelect.clear();
+        
+        document.getElementById('p_name').readOnly = false;
+        document.getElementById('p_budget').readOnly = false;
+        
+        document.getElementById('quoteContainer').style.display = 'block';
+        document.getElementById('modalTitle').innerText = "Add New Project";
+        switchTab('general'); 
+        document.querySelector('.tab-btn').classList.add('active'); 
+        modal.style.display = 'flex';
+    });
+
+    document.querySelector('.data-table').addEventListener('click', (e) => {
+        const editBtn = e.target.closest('.edit-btn');
+        if (editBtn) {
+            e.stopPropagation();
+            const data = editBtn.dataset;
+
+            document.getElementById('project_id').value = data.id;
+            document.getElementById('p_name').value = data.name;
+            document.getElementById('p_deadline').value = data.deadline;
+            document.getElementById('p_budget').value = data.budget;
+            document.getElementById('p_location').value = data.location;
+            document.getElementById('p_description').value = data.description;
+            
+            // Set client and always lock it in edit mode
+            clientSelect.setValue(data.clientId);
+            lockClientSelect();
+            
+            headSelect.setValue(data.headId);
+            
+            if (data.crew) {
+                crewSelect.setValue(JSON.parse(data.crew));
+            }
+
+            document.getElementById('quoteContainer').style.display = 'none';
+            document.getElementById('modalTitle').innerText = "Edit Project";
+
+            const hasQuote = data.quoteId && data.quoteId !== "" && data.quoteId !== "null";
+
+            if (hasQuote) {
+                // If project has a quote, lock project name and budget
+                document.getElementById('p_name').readOnly = true;
+                document.getElementById('p_budget').readOnly = true;
+            } else {
+                // If no quote, allow editing project name and budget
+                document.getElementById('p_name').readOnly = false;
+                document.getElementById('p_budget').readOnly = false;
+            }
+
+            switchTab('general');
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector('.tab-btn:first-child').classList.add('active');
+
+            modal.style.display = 'flex';
         }
 
-        // 2. Initialize Quote Dropdown (Used for Create Mode Auto-fill)
-        if (document.getElementById('p_quote')) {
-            quoteSelect = new TomSelect("#p_quote", {
-                create: false,
-                sortField: {
-                    field: "text",
-                    direction: "asc"
-                },
-                placeholder: "Search for a quote...",
-                allowEmptyOption: true,
-                onChange: function(value) {
-                    // This logic only runs when you pick a quote in the dropdown
-                    const nameInput = document.getElementById('p_name');
-                    const budgetInput = document.getElementById('p_budget');
-
-                    // Get data from the selected option
-                    const originalOption = document.querySelector(`#p_quote option[value="${value}"]`);
-
-                    if (value && originalOption) {
-                        // --- QUOTE SELECTED: FILL & LOCK ---
-                        const clientID = originalOption.getAttribute('data-client');
-                        const budgetAmount = originalOption.getAttribute('data-budget');
-                        const subject = originalOption.getAttribute('data-subject');
-
-                        if (nameInput) {
-                            nameInput.value = subject;
-                            nameInput.readOnly = true;
-                            nameInput.style.backgroundColor = "#f1f5f9"; // Grey
-                        }
-                        if (budgetInput) {
-                            budgetInput.value = budgetAmount;
-                            budgetInput.readOnly = true;
-                            budgetInput.style.backgroundColor = "#f1f5f9";
-                        }
-                        if (clientSelect) {
-                            clientSelect.setValue(clientID);
-                            clientSelect.lock();
-                        }
-                    } else {
-                        // --- MANUAL MODE: RESET & UNLOCK ---
-                        if (nameInput) {
-                            nameInput.readOnly = false;
-                            nameInput.style.backgroundColor = "#fff";
-                        }
-                        if (budgetInput) {
-                            budgetInput.readOnly = false;
-                            budgetInput.style.backgroundColor = "#fff";
-                        }
-                        if (clientSelect) {
-                            clientSelect.unlock();
-                            clientSelect.clear();
-                        }
-                    }
+        const deleteBtn = e.target.closest('.delete-btn');
+        if (deleteBtn) {
+            e.stopPropagation();
+            const id = deleteBtn.getAttribute('data-id');
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "You won't be able to revert this!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                confirmButtonText: 'Yes, delete it!'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    await fetch(`/projects/${id}`, {
+                        method: 'DELETE',
+                        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+                    });
+                    window.location.reload();
                 }
             });
+        }
+        
+        const row = e.target.closest('tr[data-href]');
+        if (row && !e.target.closest('button')) {
+            window.location.href = row.dataset.href;
         }
     });
 
-    // --- ELEMENTS ---
-    const modal = document.getElementById('addProjectModal');
-    const modalTitle = document.getElementById('modalTitle');
-    const openBtn = document.getElementById('addProjectBtn');
-    const closeBtn = document.querySelector('.close-modal-btn');
-    const cancelBtn = document.querySelector('.btn-cancel');
-    const saveBtn = document.querySelector('.btn-save');
-    const projectForm = document.getElementById('createProjectForm');
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('project_id').value;
+        
+        const formData = {
+            project_name: document.getElementById('p_name').value,
+            client_id: document.getElementById('p_client').value,
+            project_end_date: document.getElementById('p_deadline').value,
+            project_budget: document.getElementById('p_budget').value,
+            project_location: document.getElementById('p_location').value,
+            project_description: document.getElementById('p_description').value,
+            head_landscaper_id: document.getElementById('p_head').value,
+            crew_ids: crewSelect.getValue(),
+            quote_id: id ? null : document.getElementById('p_quote').value
+        };
 
-    const idField = document.getElementById('project_id');
-    const nameField = document.getElementById('p_name');
-    const clientField = document.getElementById('p_client');
-    const deadlineField = document.getElementById('p_deadline');
-    const budgetField = document.getElementById('p_budget');
-    const quoteContainer = document.getElementById('quoteContainer');
+        const url = id ? `/projects/${id}` : "{{ route('projects.create') }}";
+        const method = id ? 'PUT' : 'POST';
 
-    // --- 1. OPEN MODAL (ADD MODE) ---
-    if (openBtn) {
-        openBtn.addEventListener('click', () => {
-            idField.value = '';
-            nameField.value = '';
-            deadlineField.value = '';
-            budgetField.value = '';
+        try {
+            const response = await fetch(url, {
+                method: method,
+                headers: { 
+                    'Content-Type': 'application/json', 
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}', 
+                    'Accept': 'application/json' 
+                },
+                body: JSON.stringify(formData)
+            });
 
-            // Show Quote Dropdown
-            if (quoteContainer) quoteContainer.style.display = 'block';
+            const result = await response.json();
 
-            // Reset Quote Dropdown (Triggers onChange to unlock fields)
-            if (quoteSelect) quoteSelect.clear();
-
-            // Explicitly unlock just in case
-            nameField.readOnly = false;
-            nameField.style.backgroundColor = "#fff";
-            budgetField.readOnly = false;
-            budgetField.style.backgroundColor = "#fff";
-            if (clientSelect) {
-                clientSelect.unlock();
-                clientSelect.clear();
-            }
-
-            modalTitle.innerText = "Add New Project";
-            modal.style.display = 'flex';
-        });
-    }
-
-    // --- 2. TABLE ACTIONS (EDIT / DELETE) ---
-    const table = document.querySelector('.data-table');
-    if (table) {
-        table.addEventListener('click', (e) => {
-
-            // --- EDIT BUTTON ---
-            const editBtn = e.target.closest('.edit-btn');
-            if (editBtn) {
-                e.stopPropagation();
-
-                // Get Data from Attributes
-                const pId = editBtn.getAttribute('data-id');
-                const pName = editBtn.getAttribute('data-name');
-                const pDeadline = editBtn.getAttribute('data-deadline');
-                const pBudget = editBtn.getAttribute('data-budget');
-                const pClientId = editBtn.getAttribute('data-client-id');
-                const linkedQuoteId = editBtn.getAttribute('data-quote-id'); // Critical
-
-                // Set Common Values
-                idField.value = pId;
-                deadlineField.value = pDeadline;
-                modalTitle.innerText = "Edit Project";
-
-                // RULE 1: Hide Quote Dropdown in Edit Mode
-                if (quoteContainer) quoteContainer.style.display = 'none';
-
-                // RULE 2: STRICT LOCKING CHECK
-                // Check if linkedQuoteId exists and is not null/empty
-                if (linkedQuoteId && linkedQuoteId !== "null" && linkedQuoteId !== "") {
-
-                    // --- HAS QUOTE: LOCK FIELDS ---
-                    nameField.value = pName;
-                    nameField.readOnly = true;
-                    nameField.style.backgroundColor = "#f1f5f9";
-
-                    budgetField.value = pBudget;
-                    budgetField.readOnly = true;
-                    budgetField.style.backgroundColor = "#f1f5f9";
-
-                    if (clientSelect) {
-                        clientSelect.setValue(pClientId);
-                        clientSelect.lock();
-                    }
-
-                } else {
-                    // --- NO QUOTE: UNLOCK FIELDS ---
-                    nameField.value = pName;
-                    nameField.readOnly = false;
-                    nameField.style.backgroundColor = "#fff";
-
-                    budgetField.value = pBudget;
-                    budgetField.readOnly = false;
-                    budgetField.style.backgroundColor = "#fff";
-
-                    if (clientSelect) {
-                        clientSelect.unlock();
-                        clientSelect.setValue(pClientId);
-                    }
-                }
-
-                // Deadline is always editable
-                deadlineField.readOnly = false;
-
-                modal.style.display = 'flex';
-                return;
-            }
-
-            // --- DELETE BUTTON ---
-            const deleteBtn = e.target.closest('.delete-btn');
-            if (deleteBtn) {
-                e.stopPropagation();
-                const id = deleteBtn.getAttribute('data-id');
-
+            if (response.ok) {
+                modal.style.display = 'none';
                 Swal.fire({
-                    title: 'Are you sure?',
-                    text: "You won't be able to revert this!",
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#d33',
-                    cancelButtonColor: '#3085d6',
-                    confirmButtonText: 'Yes, delete it!'
-                }).then(async (result) => {
-                    if (result.isConfirmed) {
-                        try {
-                            const response = await fetch(`/projects/${id}`, {
-                                method: 'DELETE',
-                                headers: {
-                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                                    'Accept': 'application/json'
-                                }
-                            });
-
-                            if (response.ok) {
-                                Swal.fire('Deleted!', 'Project has been deleted.', 'success').then(() => window.location.reload());
-                            } else {
-                                Swal.fire('Error', 'Could not delete project.', 'error');
-                            }
-                        } catch (error) {
-                            console.error(error);
-                        }
-                    }
-                });
-                return;
-            }
-
-            // --- ROW CLICK (Navigate) ---
-            const row = e.target.closest('tr[data-href]');
-            // Safety check: Don't navigate if clicked a button
-            if (row && !e.target.closest('button') && !e.target.closest('.btn-action')) {
-                window.location.href = row.dataset.href;
-            }
-        });
-    }
-
-    // --- 3. SAVE LOGIC ---
-    if (projectForm) {
-        projectForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const id = idField.value;
-
-            // Base Data
-            const formData = {
-                project_name: nameField.value,
-                client_id: clientField.value,
-                project_end_date: deadlineField.value,
-                project_budget: budgetField.value,
-            };
-
-            let url = "{{ route('projects.create') }}";
-            let method = 'POST';
-
-            if (id) {
-                // UPDATE MODE
-                url = `/projects/${id}`;
-                method = 'PUT';
-                // NOTE: We do NOT send quote_id here to avoid breaking the link
+                    title: 'Success!',
+                    text: result.message,
+                    icon: 'success',
+                    timer: 1500,
+                    showConfirmButton: false
+                }).then(() => window.location.reload());
             } else {
-                // CREATE MODE: Send the quote ID
-                formData.quote_id = document.getElementById('p_quote') ? document.getElementById('p_quote').value : null;
+                let msg = result.message || 'Validation Failed';
+                if(result.errors) msg = Object.values(result.errors).flat().join('\n');
+                Swal.fire('Error', msg, 'error');
             }
+        } catch (error) {
+            Swal.fire('Error', 'System error occurred', 'error');
+        }
+    });
 
-            try {
-                const response = await fetch(url, {
-                    method: method,
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                    },
-                    body: JSON.stringify(formData)
-                });
+    const closeModal = () => modal.style.display = 'none';
+    document.querySelectorAll('.close-modal-btn, .btn-cancel').forEach(b => b.onclick = closeModal);
 
-                const result = await response.json();
-
-                if (response.ok) {
-                    modal.style.display = 'none';
-                    Swal.fire({
-                        title: 'Success!',
-                        text: result.message || 'Project saved successfully.',
-                        icon: 'success',
-                        timer: 1500,
-                        showConfirmButton: false
-                    }).then(() => {
-                        window.location.reload();
-                    });
-                } else {
-                    let errorMessage = result.message || 'Validation Failed';
-                    if (result.errors) {
-                        errorMessage = Object.values(result.errors).flat().join('\n');
-                    }
-                    Swal.fire('Error', errorMessage, 'error');
-                }
-            } catch (error) {
-                console.error(error);
-                Swal.fire('Error', 'System error occurred', 'error');
-            }
-        });
-    }
-
-    // --- CLOSE MODAL ---
-    const closeModal = () => {
-        modal.style.display = 'none';
-    };
-    if (closeBtn) closeBtn.addEventListener('click', closeModal);
-    if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
-    // window.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
-
-    // --- SEARCH LOGIC ---
     const searchInput = document.getElementById('searchInput');
     const tableBody = document.getElementById('projectsTableBody');
     if (searchInput && tableBody) {

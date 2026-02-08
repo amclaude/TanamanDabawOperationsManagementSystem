@@ -45,8 +45,10 @@
         transition: all 0.2s ease;
     }
     .btn-icon:hover { transform: translateY(-1px); }
+    
     .btn-send { background: #3b82f6; color: white; }
     .btn-send:hover { background: #2563eb; }
+    
     .btn-pay { background: #10b981; color: white; }
     .btn-pay:hover { background: #059669; }
     
@@ -64,7 +66,7 @@
         display: none;
         position: fixed; 
         background: white;
-        min-width: 160px;
+        min-width: 170px; /* Slightly wider for Resend text */
         border-radius: 8px;
         box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
         border: 1px solid #e5e7eb;
@@ -196,6 +198,7 @@
                                 <i class="fas fa-paper-plane"></i>
                             </button>
                         @elseif($invoice->status === 'sent')
+                            {{-- Just the Mark Paid button here --}}
                             <button class="btn-icon btn-pay mark-paid-btn"
                                 data-id="{{ $invoice->id }}"
                                 title="Mark as Paid">
@@ -208,6 +211,7 @@
                         </button>
 
                         <div class="action-menu">
+                            {{-- If Paid, they can ONLY View, not Edit --}}
                             @if($invoice->status === 'paid')
                                 <button class="menu-item-btn view-btn"
                                     data-id="{{ $invoice->id }}"
@@ -222,18 +226,27 @@
                                 </button>
                             @endif
 
+                            {{-- NEW: Resend Option inside the menu --}}
+                            @if($invoice->status === 'sent')
+                                <button class="menu-item-btn send-email-btn btn-resend"
+                                    data-id="{{ $invoice->id }}"
+                                    data-email="{{ $invoice->client->email ?? '' }}">
+                                    <i class="fas fa-paper-plane" style="color: #64748b;"></i> Resend Invoice
+                                </button>
+                            @endif
+
                             @if($invoice->status !== 'paid' && $invoice->status !== 'sent')
                                 <button class="menu-item-btn mark-paid-btn" data-id="{{ $invoice->id }}">
                                     <i class="fas fa-check-circle" style="color: #10b981;"></i> Mark as Paid
                                 </button>
                             @endif
 
-                            @if($invoice->status !== 'paid')
-                                <div style="border-top: 1px solid #f3f4f6; margin: 4px 0;"></div>
-                                <button class="menu-item-btn delete-btn text-danger" data-id="{{ $invoice->id }}">
-                                    <i class="fas fa-trash-alt"></i> Delete Invoice
-                                </button>
-                            @endif
+                            <div style="border-top: 1px solid #f3f4f6; margin: 4px 0;"></div>
+                            <button class="menu-item-btn delete-btn text-danger" 
+                                data-id="{{ $invoice->id }}"
+                                data-status="{{ $invoice->status }}">
+                                <i class="fas fa-trash-alt"></i> Delete Invoice
+                            </button>
                         </div>
                     </div>
                 </td>
@@ -573,7 +586,7 @@
             }
         });
 
-        // Send Email
+        // Send Email (HANDLES RESEND AS WELL)
         document.addEventListener('click', function(e) {
             if(e.target.closest('.send-email-btn')) {
                 const btn = e.target.closest('.send-email-btn');
@@ -583,8 +596,13 @@
                     Swal.fire('Error', 'No email linked to this client.', 'error');
                     return;
                 }
+                
+                // Customize title based on if it's a resend
+                const isResend = btn.classList.contains('btn-resend');
+                const titleText = isResend ? 'Resend Invoice?' : 'Send Invoice?';
+
                 Swal.fire({
-                    title: 'Send Invoice?',
+                    title: titleText,
                     text: `Send to ${clientEmail}?`,
                     icon: 'info',
                     showCancelButton: true,
@@ -607,11 +625,12 @@
             }
         });
 
-        // Delete
+        // Delete (STANDARD DELETE, NO SECURITY CHECK AS REQUESTED)
         document.addEventListener('click', function(e) {
             if(e.target.closest('.delete-btn')) {
                 const btn = e.target.closest('.delete-btn');
                 const id = btn.getAttribute('data-id');
+
                 Swal.fire({
                     title: 'Delete Invoice?',
                     text: "This action cannot be undone.",

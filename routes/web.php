@@ -74,6 +74,11 @@ Route::middleware(['auth', 'restrict.user'])->group(function () {
     Route::delete('projects/{id}', [ProjectController::class, 'destroy'])
         ->name('projects.destroy');
     Route::get('/projects/{id}', [ProjectController::class, 'show'])->name('projects.panel');
+    // Route::post('/projects/{id}/upload', [ProjectController::class, 'uploadImage'])->name('projects.upload');
+});
+
+Route::middleware(['auth'])->group(function () {
+    // Allow Head Landscapers to upload photos
     Route::post('/projects/{id}/upload', [ProjectController::class, 'uploadImage'])->name('projects.upload');
 });
 
@@ -82,6 +87,7 @@ Route::middleware(['auth', 'restrict.user'])->group(function () {
     Route::get('/employees', [EmployeeController::class, 'index'])->name('employees');
     Route::post('/employees', [EmployeeController::class, 'store'])->name('employees.store');
     Route::put('/employees/{employee}', [EmployeeController::class, 'update'])->name('employees.update');
+    Route::put('/employees/{id}/deactivate', [EmployeeController::class, 'deactivate'])->name('employees.deactivate');
     Route::delete('/employees/{employee}', [EmployeeController::class, 'destroy'])->name('employees.destroy');
     Route::get('/employees/{employee}', [EmployeeController::class, 'show'])->name('employees.panel');
 });
@@ -118,10 +124,8 @@ Route::middleware(['auth'])->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
 });
-Route::middleware(['auth', 'restrict.user'])->group(function () {
 
-    // Employee View (For non-admin redirection)
-    Route::get('/employee/projects', function () {
-        return view('temp');
-    })->name('employee.projects');
+Route::middleware(['auth', 'restrict.user'])->group(function () {
+    Route::get('/assigned/projects', [ProjectController::class, 'index'])->name('employee.projects');
+    Route::get('/assigned/projects/{id}', [ProjectController::class, 'show'])->name('employee.panel');
 });

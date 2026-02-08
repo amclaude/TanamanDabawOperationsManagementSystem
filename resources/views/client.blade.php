@@ -57,6 +57,7 @@
                 style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #64748b;"></i>
         </form>
 
+        {{-- Both Admin and Ops Manager can Add Clients, so this stays visible to all --}}
         <button class="btn-primary" id="addClientBtn">
             <i class="fas fa-plus"></i> Add Client
         </button>
@@ -82,6 +83,7 @@
                 <td>{{ $client->phone ?? 'N/A' }}</td>
                 <td>{{ $client->address ?? 'N/A' }}</td>
                 <td>
+                    {{-- Both Roles can Edit --}}
                     <button class="btn-primary edit-btn"
                         title="Edit Client"
                         data-id="{{ $client->id }}"
@@ -92,11 +94,14 @@
                         <i class="fas fa-edit"></i>
                     </button>
 
+                    {{-- SECURITY UPDATE: Only 'Admin' can see the Delete button --}}
+                    @if(auth()->user()->role === 'Admin')
                     <button class="btn-danger delete-btn"
                         title="Delete Client"
                         data-id="{{ $client->id }}">
                         <i class="fas fa-trash-alt"></i>
                     </button>
+                    @endif
                 </td>
             </tr>
             @empty
@@ -156,6 +161,7 @@
 
 @push('scripts')
 <script>
+    // --- UI INTERACTION SCRIPTS ---
     const profileTrigger = document.getElementById('profile-trigger');
     const dropdownMenu = document.getElementById('profile-dropdown');
     const dropdownIcon = document.querySelector('.dropdown-icon');
@@ -190,6 +196,7 @@
         });
     }
 
+    // --- MODAL VARIABLES ---
     const modal = document.getElementById('clientModal');
     const modalTitle = document.getElementById('modalTitle');
     const addBtn = document.getElementById('addClientBtn');
@@ -203,9 +210,8 @@
     const phoneField = document.getElementById('phone');
     const addressField = document.getElementById('address');
 
-    // search logic
+    // --- SEARCH LOGIC ---
     const searchInput = document.getElementById('searchInput');
-
     const tableBody = document.getElementById('clientTableBody');
 
     if (searchInput && tableBody) {
@@ -215,7 +221,6 @@
 
             for (let i = 0; i < rows.length; i++) {
                 let textContent = rows[i].innerText.toLowerCase();
-
                 // Toggle visibility based on search match
                 if (textContent.includes(filter)) {
                     rows[i].style.display = "";
@@ -226,13 +231,14 @@
         });
     }
 
+    // --- OPEN MODAL (ADD) ---
     if (addBtn) {
         addBtn.addEventListener('click', () => {
             clientIdField.value = '';
             nameField.value = '';
             emailField.value = '';
             phoneField.value = '';
-            phoneField.placeholder='09xx000xxxx';
+            phoneField.placeholder = '09xx000xxxx';
             addressField.value = '';
 
             modalTitle.innerText = "Add New Client";
@@ -240,12 +246,17 @@
         });
     }
 
+    // --- TABLE ACTIONS (DELEGATION) ---
     const table = document.querySelector('.data-table');
     if (table) {
         table.addEventListener('click', (e) => {
 
+            // 1. Handle Edit Click
             const editBtn = e.target.closest('.edit-btn');
             if (editBtn) {
+                // Prevent row click event
+                e.stopPropagation();
+
                 clientIdField.value = editBtn.getAttribute('data-id');
                 nameField.value = editBtn.getAttribute('data-name');
                 emailField.value = editBtn.getAttribute('data-email');
@@ -257,8 +268,12 @@
                 return;
             }
 
+            // 2. Handle Delete Click
             const deleteBtn = e.target.closest('.delete-btn');
             if (deleteBtn) {
+                // Prevent row click event
+                e.stopPropagation();
+
                 const id = deleteBtn.getAttribute('data-id');
 
                 Swal.fire({
@@ -301,6 +316,7 @@
                 return;
             }
 
+            // 3. Handle Row Click (Navigate to Panel)
             const row = e.target.closest('tr[data-href]');
             if (row) {
                 window.location.href = row.dataset.href;
@@ -308,16 +324,14 @@
         });
     }
 
-
+    // --- CLOSE MODAL HELPERS ---
     const closeModal = () => {
         if (modal) modal.style.display = 'none';
     };
     if (closeBtn) closeBtn.addEventListener('click', closeModal);
     if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
-    // window.addEventListener('click', (e) => {
-    //     if (e.target === modal) closeModal();
-    // });
 
+    // --- SAVE / UPDATE LOGIC ---
     if (saveBtn) {
         saveBtn.addEventListener('click', async (e) => {
             e.preventDefault();
@@ -339,6 +353,11 @@
             }
 
             try {
+                
+                Swal.fire({
+                    title: 'Processing...',
+                    didOpen: () => Swal.showLoading()
+                });
                 const response = await fetch(url, {
                     method: method,
                     headers: {

@@ -16,18 +16,15 @@ class EnsureSetup
      */
     public function handle(Request $request, Closure $next): Response
     {
+        $adminExists = User::where('role', 'Admin')->exists();
 
-        $isAdminExists = User::where('is_admin', true)->exists();
+        // Block setup if already configured
+        if ($adminExists && $request->is('setup*')) {
+            return redirect('/');
+        }
 
-
-        if (!$isAdminExists) {
-
-
-            if ($request->is('setup') || $request->is('setup/*') || $request->is('register')) {
-                return $next($request);
-            }
-
-
+        // Force setup if not configured
+        if (! $adminExists && ! $request->is('setup*')) {
             return redirect('/setup');
         }
 

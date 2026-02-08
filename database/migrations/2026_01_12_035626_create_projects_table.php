@@ -17,9 +17,11 @@ return new class extends Migration
             $table->string('project_name');
             $table->decimal('project_budget', 15, 2);
             $table->boolean('is_active')->default(true);
+            $table->string('project_description')->nullable();
+            $table->string('project_location');
             $table->date('project_start_date');
             $table->date('project_end_date');
-
+            $table->foreignId('head_landscaper_id')->nullable()->constrained('users')->nullOnDelete();
             $table->foreignId('client_id')->constrained()->onDelete('cascade');
 
             $table->timestamps();

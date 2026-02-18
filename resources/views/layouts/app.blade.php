@@ -12,10 +12,50 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
+    <style>
+        /* Sidebar Collapse Transitions */
+        .dashboard-container {
+            display: flex;
+        }
+
+        .sidebar {
+            width: 250px; /* Default width */
+            transition: width 0.3s ease;
+            overflow: hidden;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        /* Collapsed State */
+        .dashboard-container.collapsed .sidebar {
+            width: 70px;
+        }
+
+        .dashboard-container.collapsed .sidebar span {
+            display: none;
+        }
+
+        .dashboard-container.collapsed .sidebar .sidebar-menu li a,
+        .dashboard-container.collapsed .sidebar .sidebar-footer .sign-out-link {
+            justify-content: center;
+            text-align: center !important;
+            padding-left: 0;
+            padding-right: 0;
+        }
+
+        .dashboard-container.collapsed .sidebar i {
+            margin-right: 0;
+        }
+
+        /* Prevent transitions on page load */
+        .no-transition * {
+            transition: none !important;
+        }
+    </style>
     @stack('styles')
 </head>
 
-<body class="dashboard-body">
+<body class="dashboard-body no-transition">
 
     @include('partials.navbar')
 

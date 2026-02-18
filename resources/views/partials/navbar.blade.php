@@ -1,17 +1,19 @@
 <nav class="navbar">
-    <i class="fas fa-bars" id="menu-toggle"
-        style="font-size: 1.5rem; cursor: pointer; display: none; margin-right: 15px;"></i>
+    <div class="nav-left" style="display: flex; align-items: center;">
+        <i class="fas fa-bars" id="menu-toggle"
+            style="font-size: 1.5rem; cursor: pointer; margin-right: 15px;"></i>
 
-    <div class="nav-brand">
-        <div class="logo-container">
-            <img src="{{ asset('images/TanamanLogo.png') }}" alt="Logo" class="nav-logo">
+        <div class="nav-brand">
+            <div class="logo-container">
+                <img src="{{ asset('images/TanamanLogo.png') }}" alt="Logo" class="nav-logo">
+            </div>
+            <span class="company-name">Tanaman</span>
         </div>
-        <span class="company-name">Tanaman</span>
     </div>
 
     <div class="nav-profile" id="profile-trigger">
         <div class="profile-text">
-            <span class="profile-name">{{ Auth::user()->name }}</span>
+            <span class="profile-name">{{ explode(' ', Auth::user()->name)[0] }} {{ explode(' ', Auth::user()->name)[1] }}</span>
             <span class="profile-role">{{ Auth::user()->role }}</span>
         </div>
         <img src="{{ asset('images/images.jpg') }}" class="profile-pic">
@@ -26,9 +28,6 @@
             <a href="{{ route('profile') }}" class="dropdown-item">
                 <i class="far fa-user"></i> My Profile
             </a>
-            <a href="#" class="dropdown-item">
-                <i class="fas fa-cog"></i> Account Setting
-            </a>
             <hr>
 
             <form method="POST" action="{{ route('logout') }}">
@@ -42,23 +41,29 @@
 </nav>
 @push('scripts')
 <script>
-    const menuToggle = document.getElementById('menu-toggle');
-    const sidebar = document.querySelector('.sidebar');
-
-    if (menuToggle && sidebar) {
-        menuToggle.addEventListener('click', (e) => {
-            e.stopPropagation();
-            sidebar.classList.toggle('active');
-        });
-        document.addEventListener('click', (e) => {
-            if (sidebar.classList.contains('active') &&
-                !sidebar.contains(e.target) &&
-                e.target !== menuToggle) {
-                sidebar.classList.remove('active');
-            }
-        });
-    }
     document.addEventListener('DOMContentLoaded', function() {
+        const menuToggle = document.getElementById('menu-toggle');
+        const dashboardContainer = document.querySelector('.dashboard-container');
+
+        // Restore sidebar state from localStorage
+        if (dashboardContainer && localStorage.getItem('sidebarState') === 'collapsed') {
+            dashboardContainer.classList.add('collapsed');
+        }
+
+        // Enable transitions after page load to prevent initial animation
+        setTimeout(() => {
+            document.body.classList.remove('no-transition');
+        }, 100);
+
+        if (menuToggle && dashboardContainer) {
+            menuToggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                dashboardContainer.classList.toggle('collapsed');
+                // Save state to localStorage
+                localStorage.setItem('sidebarState', dashboardContainer.classList.contains('collapsed') ? 'collapsed' : 'expanded');
+            });
+        }
+
         const profileTrigger = document.getElementById('profile-trigger');
         const dropdownMenu = document.getElementById('profile-dropdown');
         const dropdownIcon = document.querySelector('.dropdown-icon');

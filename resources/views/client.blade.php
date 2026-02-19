@@ -181,20 +181,7 @@
         });
     }
 
-    const menuToggle = document.getElementById('menu-toggle');
-    const sidebar = document.querySelector('.sidebar');
-
-    if (menuToggle && sidebar) {
-        menuToggle.addEventListener('click', (e) => {
-            e.stopPropagation();
-            sidebar.classList.toggle('active');
-        });
-        document.addEventListener('click', (e) => {
-            if (sidebar.classList.contains('active') && !sidebar.contains(e.target) && e.target !== menuToggle) {
-                sidebar.classList.remove('active');
-            }
-        });
-    }
+    // Sidebar toggle is handled globally in the navbar partial.
 
     // --- MODAL VARIABLES ---
     const modal = document.getElementById('clientModal');

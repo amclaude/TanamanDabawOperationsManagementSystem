@@ -256,7 +256,7 @@ body {
 
     align-items: center;
 
-    padding: 0 2rem;
+    padding: 0 1rem;
 
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 
@@ -274,7 +274,8 @@ body {
 
 
 
-.nav-brand { display: flex; align-items: center; gap: 15px; cursor: pointer; }
+.nav-brand { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+    .nav-left { display: flex; align-items: center; gap: 6px; }
 
 
 
@@ -469,6 +470,26 @@ body {
 .sign-out-link:hover { color: white; }
 
 .sign-out-link i { width: 25px; margin-right: 10px; transform: rotate(180deg); }
+
+/* Collapsed (icons-only) sidebar */
+.sidebar.collapsed {
+    width: 72px;
+}
+.sidebar.collapsed .sidebar-menu { padding: 20px 8px; }
+.sidebar.collapsed .sidebar-menu li a { justify-content: center; padding: 12px 8px; }
+.sidebar.collapsed .sidebar-menu li a i { margin-right: 0; }
+.sidebar.collapsed .sidebar-menu li a .label { display: none; }
+.sidebar.collapsed .sidebar-footer .sign-out-link { justify-content: center; }
+
+/* Also apply when persisted via html attribute to avoid jump on page load */
+html[data-sidebar-collapsed="1"] .sidebar {
+    width: 72px;
+}
+html[data-sidebar-collapsed="1"] .sidebar .sidebar-menu { padding: 20px 8px; }
+html[data-sidebar-collapsed="1"] .sidebar .sidebar-menu li a { justify-content: center; padding: 12px 8px; }
+html[data-sidebar-collapsed="1"] .sidebar .sidebar-menu li a i { margin-right: 0; }
+html[data-sidebar-collapsed="1"] .sidebar .sidebar-menu li a .label { display: none; }
+html[data-sidebar-collapsed="1"] .sidebar .sidebar-footer .sign-out-link { justify-content: center; }
 
 
 
@@ -1273,6 +1294,8 @@ body {
     }
 
 
+
+    #menu-toggle { display: inline-block; margin-right: 6px; background: none; border: none; color: inherit; cursor: pointer; }
 
     .sidebar {
 

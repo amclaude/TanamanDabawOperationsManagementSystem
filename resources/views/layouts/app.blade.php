@@ -39,6 +39,39 @@
     </div>
 
     @include('partials.footer')
+    <!-- Global front-end input validation: ensures phone numbers are digits-only, quantities/stock are non-negative integers, and prices/budgets are non-negative decimals -->
+    <script>
+        document.addEventListener('input', function(e) {
+            const el = e.target;
+            if (!el || el.tagName !== 'INPUT') return;
+
+            // Phone inputs: digits only (no letters, no negatives)
+            if (el.matches('input[type="tel"], #c_phone, .phone-input')) {
+                const pos = el.selectionStart;
+                el.value = (el.value || '').replace(/\D+/g, '');
+                try { el.setSelectionRange(pos, pos); } catch (err) {}
+                return;
+            }
+
+            // Integer inputs (quantities, stock): remove non-digits and disallow negative
+            if (el.matches('#itemStock, #inQuantity, #outQuantity, .item-qty, .i-qty, input.integer')) {
+                const pos = el.selectionStart;
+                el.value = (el.value || '').replace(/\D+/g, '');
+                try { el.setSelectionRange(pos, pos); } catch (err) {}
+                return;
+            }
+
+            // Positive decimal inputs (prices, budgets): allow numbers and single dot, no negative
+            if (el.matches('#itemPrice, #p_budget, .item-price, .i-price, input.positive')) {
+                let v = el.value || '';
+                v = v.replace(/[^0-9.]+/g, '');
+                const parts = v.split('.');
+                if (parts.length > 2) v = parts[0] + '.' + parts.slice(1).join('');
+                el.value = v;
+                return;
+            }
+        });
+    </script>
     @stack('scripts')
 </body>
 

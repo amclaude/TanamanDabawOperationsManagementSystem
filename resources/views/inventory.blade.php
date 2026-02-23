@@ -311,12 +311,12 @@
             <div style="display: flex; gap: 15px;">
                 <div class="input-group" style="flex:1;">
                     <label>Price (₱)</label>
-                    <input type="number" id="itemPrice" step="0.01" placeholder="0.00" required>
+                    <input type="number" id="itemPrice" step="0.01" min="0" placeholder="0.00" required>
                 </div>
                 {{-- Initial Stock is only visible on CREATE, hidden on UPDATE --}}
                 <div class="input-group" style="flex:1;" id="initialStockGroup">
                     <label>Initial Stock</label>
-                    <input type="number" id="itemStock" placeholder="0">
+                    <input type="number" id="itemStock" min="0" placeholder="0">
                 </div>
             </div>
             <div class="modal-actions">

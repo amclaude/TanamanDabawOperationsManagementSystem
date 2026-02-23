@@ -837,23 +837,29 @@ html[data-sidebar-collapsed="1"] .sidebar .sidebar-footer .sign-out-link { justi
 
 
 
-.data-table tr:hover { 
+/* Only tbody rows are hoverable, not headers */
+.data-table tbody tr:hover { 
 
-    background-color: #f9fafb; 
+    background-color: #e2e8f0;
 
     cursor: pointer;
 
 }
 
-
-
-.data-table tbody tr:hover{
-
-    background-color: #e2e8f0;
-
+/* Prevent hover on table headers */
+.data-table thead tr:hover {
+    background-color: transparent;
+    cursor: default;
 }
 
+/* Empty tables should not be hoverable */
+.data-table.empty-table tbody tr {
+    cursor: default;
+}
 
+.data-table.empty-table tbody tr:hover {
+    background-color: transparent;
+}
 
 /* POPUP STYLES */
 

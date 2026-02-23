@@ -346,7 +346,7 @@
 
             <div class="input-group">
                 <label>Budget (₱)</label>
-                <input type="number" id="p_budget" placeholder="e.g. 5000" step="0.01" required>
+                <input type="number" id="p_budget" placeholder="e.g. 5000" step="0.01" min="0" required>
             </div>
 
             <div class="modal-actions">

@@ -71,6 +71,20 @@
                 return;
             }
         });
+
+        // Disable hover on empty tables (tables with only "No data" message)
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.data-table').forEach(table => {
+                const tbody = table.querySelector('tbody');
+                if (tbody) {
+                    const rows = tbody.querySelectorAll('tr');
+                    // Check if table only has "empty" state row (single row with colspan)
+                    if (rows.length === 1 && rows[0].querySelector('td[colspan]')) {
+                        table.classList.add('empty-table');
+                    }
+                }
+            });
+        });
     </script>
     @stack('scripts')
 </body>

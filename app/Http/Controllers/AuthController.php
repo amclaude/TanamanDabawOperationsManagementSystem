@@ -30,8 +30,15 @@ class AuthController extends Controller
         $remember = $request->boolean('remember');
 
 
+
         if (Auth::attempt($credentials, $remember)) {
+            # block login of user with status  "Inactive"
+            if (Auth::user()->status == "Inactive") {
+                Auth::logout();
+                return response()->json(['message' => "It appears your account is inactive. Please contact the Admin."], 403);
+            }
             $request->session()->regenerate();
+            
             return response()->json(['message' => 'Login successful'], 200);
         } else {
             return response()->json(['message' => 'Invalid credentials'], 401);

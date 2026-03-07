@@ -80,7 +80,7 @@ class InvoiceController extends Controller
     public function update(Request $request, $id)
     {
         $validated = $request->validate([
-            'project_id'    => 'required|exists:projects,id',
+            // 'project_id'    => 'required|exists:projects,id',
             'client_id'     => 'required|exists:clients,id',
             'issue_date'    => 'required|date',
             'due_date'      => 'required|date|after_or_equal:issue_date',
@@ -94,7 +94,7 @@ class InvoiceController extends Controller
             DB::transaction(function () use ($validated, $id) {
                 $invoice = Invoice::findOrFail($id);
                 $invoice->update([
-                    'project_id' => $validated['project_id'],
+                    'project_id' => $invoice['project_id'],
                     'client_id'  => $validated['client_id'],
                     'issue_date' => $validated['issue_date'],
                     'due_date'   => $validated['due_date'],

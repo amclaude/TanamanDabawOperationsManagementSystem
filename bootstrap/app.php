@@ -4,6 +4,7 @@ use App\Http\Middleware\CheckRole;
 use App\Http\Middleware\EnsureNotInstalled;
 use App\Http\Middleware\EnsureSetup;
 use App\Http\Middleware\RestrictUserAccess;
+use App\Http\Middleware\MinifyHtml;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -15,6 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        // $middleware->append(MinifyHtml::class);
         $middleware->alias([
             'not.installed' => EnsureNotInstalled::class,
             'restrict.user' => RestrictUserAccess::class,

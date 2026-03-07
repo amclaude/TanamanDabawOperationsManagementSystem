@@ -153,7 +153,7 @@ class InventoryController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'quantity' => 'required|integer|min:1',
-            'reason'   => 'nullable|string|max:255',
+            'reason'   => 'string|max:255',
         ]);
 
         if ($validator->fails()) {

@@ -103,11 +103,11 @@
 
                 } else {
                     // Handle Validation Errors or Bad Credentials
-                    let errorMessage = result.message || 'Invalid username or password.';
+                    let errorMessage = result.message || 'An unknown error has occured';
                     
                     Swal.fire({
                         title: 'Access Denied',
-                        text: errorMessage,
+                        text:     errorMessage,
                         icon: 'error',
                         iconColor: '#d33',          
                         confirmButtonColor: '#1A4D3F', 

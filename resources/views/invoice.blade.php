@@ -399,8 +399,9 @@
             isEditMode = false;
             invoiceIdInput.value = '';
             
-            // Re-show project selector (it might have been hidden by Edit or View mode)
+            // Re-show project selector and RESTORE required attribute
             projectSelectContainer.style.display = 'block';
+            projectSelect.required = true;
             
             form.classList.remove('view-mode-active');
             form.querySelectorAll('input, select').forEach(el => {
@@ -498,8 +499,9 @@
                 const btn = e.target.closest('.edit-btn');
                 isEditMode = true;
 
-                // HIDE PROJECT SELECTOR DURING EDIT
+                // HIDE PROJECT SELECTOR DURING EDIT AND REMOVE REQUIRED ATTRIBUTE
                 projectSelectContainer.style.display = 'none';
+                projectSelect.required = false;
 
                 const invoiceData = JSON.parse(btn.getAttribute('data-json'));
                 const invoiceId = btn.getAttribute('data-id');
@@ -534,6 +536,10 @@
                 modalTitle.innerText = "Invoice Details (Paid)";
                 form.classList.add('view-mode-active');
                 cancelBtn.innerText = "Close";
+
+                // In View Mode we also hide/disable the requirement
+                projectSelectContainer.style.display = 'none';
+                projectSelect.required = false;
 
                 projectSelect.value = invoiceData.project_id;
                 clientIdInput.value = invoiceData.client_id;

@@ -37,7 +37,7 @@ class ProjectController extends Controller
         }
         $query = Project::with(['client', 'headLandscaper', 'fieldCrew']);
 
-        $projects = $query->latest()->paginate(20)->withQueryString();
+        $projects = $query->latest()->get();
 
         $pendingQuotes = Quote::where('status', 'pending')->get();
         $clients = Client::all();
@@ -164,7 +164,12 @@ class ProjectController extends Controller
 
     public function show(string $id)
     {
-        $project = Project::findOrFail($id);
+        $project = Project::find($id);
+        if (!$project) {
+            return response()->json([
+                'message' => 'Project not found!'
+            ], 404);
+        }
         $signedImages = [];
         /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
         $disk = Storage::disk('s3');
@@ -271,9 +276,9 @@ class ProjectController extends Controller
                 $project = Project::with(['quote.items', 'client'])->withCount('images')->findOrFail($id);
 
                 // 2. Validation: Ensure images exist before completing
-                if ($project->images_count === 0) {
-                    throw new \Exception('At least one project image is required to complete the project.');
-                }
+                // if ($project->images_count === 0) {
+                //     throw new \Exception('At least one project image is required to complete the project.');
+                // }
 
                 $project->update(['is_active' => false]);
 

@@ -179,7 +179,18 @@ class EmployeeController extends Controller
 
     public function show(string $id)
     {
+        try {
         $employee = User::find($id);
+        if (!$employee) {
+            return response()->json([
+                'message'=>'Employee not found'
+            ], 404);
+        }
         return view('employeespanel', compact('employee'));
+        } catch (\Exception $e) {
+            return response()-> json([
+                'message'=> 'An error ocurred'
+            ], 500);
+        }
     }
 }

@@ -231,7 +231,6 @@
             @endforelse
         </tbody>
     </table>
-    <div style="margin-top: 20px;">{{ $projects->links() }}</div>
 </div>
 
 <div class="modal-overlay" id="addProjectModal">

@@ -21,7 +21,7 @@ class ClientController extends Controller
         $validated = $request->validate(
             [
                 'name'     => 'required|string|max:100',
-                'email'    => 'required|email|regex:/^[\w\.\-]+@[a-zA-Z\d\-]+\.[a-zA-Z]{2,}$/|unique:clients,email',
+                'email'    => 'nullable|email|regex:/^[\w\.\-]+@[a-zA-Z\d\-]+\.[a-zA-Z]{2,}$/|unique:clients,email',
                 'phone' => 'required|string|regex:/^09\d{9}$/|unique:clients,phone',
                 'address' => 'required|string|max:255',
             ],
@@ -116,7 +116,22 @@ class ClientController extends Controller
 
     public function show(string $id)
     {
+        try {
+
+        
         $client = Client::find($id);
+        if (!$client) {
+            return response()->json([
+                'message' => "Client not found!",
+                'redirect' => route('clients')
+            ], 404);
+        }
         return view('clientpanel', compact('client'));
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'An unexpected error has occured'
+            ], 500);
+        }
     }
 }

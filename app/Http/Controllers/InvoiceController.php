@@ -91,8 +91,17 @@ class InvoiceController extends Controller
         ]);
         // Update Invoice Parent Details
         try {
-            DB::transaction(function () use ($validated, $id) {
+            $changesDetected = false;
+            DB::transaction(function () use ($validated, $id, &$changesDetected) {
                 $invoice = Invoice::findOrFail($id);
+                
+                // Check if basic invoice details changed
+                if ($invoice->client_id != $validated['client_id'] || 
+                    $invoice->issue_date != $validated['issue_date'] || 
+                    $invoice->due_date != $validated['due_date']) {
+                    $changesDetected = true;
+                }
+                
                 $invoice->update([
                     'project_id' => $invoice['project_id'],
                     'client_id'  => $validated['client_id'],
@@ -100,8 +109,24 @@ class InvoiceController extends Controller
                     'due_date'   => $validated['due_date'],
                 ]);
 
-                $invoice->items()->delete();
+                // Check if items changed
+                $existingItems = $invoice->items()->get();
+                if (count($existingItems) != count($validated['items'])) {
+                    $changesDetected = true;
+                } else {
+                    foreach ($existingItems as $index => $existingItem) {
+                        $newItem = $validated['items'][$index] ?? null;
+                        if (!$newItem || 
+                            $existingItem->description != $newItem['desc'] ||
+                            $existingItem->quantity != $newItem['qty'] ||
+                            $existingItem->price != $newItem['price']) {
+                            $changesDetected = true;
+                            break;
+                        }
+                    }
+                }
 
+                $invoice->items()->delete();
 
                 $grandTotal = 0;
 
@@ -120,7 +145,9 @@ class InvoiceController extends Controller
 
                 $invoice->update(['total_amount' => $grandTotal]);
             });
-            return response()->json(['message' => 'Invoice updated successfully']);
+            
+            $message = $changesDetected ? 'Invoice updated successfully' : 'No Changes were made';
+            return response()->json(['message' => $message, 'changesDetected' => $changesDetected]);
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'An unexpected error has occurred. Please contact the developer. Error: ' . $e->getMessage()

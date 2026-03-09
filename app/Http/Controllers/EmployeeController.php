@@ -33,7 +33,12 @@ class EmployeeController extends Controller
                 'role'  => 'required|string|in:Operations Manager,Head Landscaper,Field Crew',
             ],
             [
-                'email.regex' => 'Please enter a valid email, e.g., abc@email.com',
+                'name.required' => 'Name is required',
+                'email.required' => 'Email address is required',
+                'email.email' => 'Invalid email format',
+                'email.regex' => 'Invalid email format',
+                'email.unique' => 'Email address already exists',
+                'role.required' => 'Role is required',
             ]
         );
         try {
@@ -84,6 +89,14 @@ class EmployeeController extends Controller
             'role'   => 'required|string|in:Operations Manager,Head Landscaper,Field Crew',
             'status' => 'required|string|in:Active,Inactive',
             'reset_password' => 'nullable|boolean'
+        ],
+        [
+            'name.required' => 'Name is required',
+            'email.required' => 'Email address is required',
+            'email.email' => 'Invalid email format',
+            'email.unique' => 'Email address already exists',
+            'role.required' => 'Role is required',
+            'status.required' => 'Status is required',
         ]);
         try {
             $user = User::find($id);

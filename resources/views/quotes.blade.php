@@ -181,6 +181,26 @@
         box-shadow: 0 3px 8px rgba(22, 163, 74, 0.4);
     }
 
+    /* All Tab - Blue Theme */
+    .status-tab.all-tab {
+        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+        color: #1e40af;
+        border: 1px solid #bfdbfe;
+    }
+
+    .status-tab.all-tab:hover {
+        background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%    );
+        transform: translateY(-1px);
+        box-shadow: 0 2px 6px rgba(30, 64, 175, 0.2);
+    }
+
+    .status-tab.all-tab.active {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        color: white;
+        border-color: #1e40af;
+        box-shadow: 0 3px 8px rgba(37, 99, 235, 0.4);
+    }
+
     .status-tab .count {
         background: rgba(255,255,255,0.9);
         color: inherit;
@@ -233,7 +253,12 @@
 <!-- Tabs Container: Below header, aligned right -->
 <div class="tabs-container">
     <div class="status-tabs">
-        <button class="status-tab pending-tab active" data-status="pending" onclick="switchStatusTab('pending')">
+        <button class="status-tab all-tab active" data-status="all" onclick="switchStatusTab('all')">
+            <i class="fas fa-list"></i>
+            All
+            <span class="count">{{ $quotes->count() }}</span>
+        </button>
+        <button class="status-tab pending-tab" data-status="pending" onclick="switchStatusTab('pending')">
             <i class="fas fa-clock"></i>
             Pending
             <span class="count">{{ $quotes->where('status', 'pending')->count() }}</span>
@@ -246,8 +271,58 @@
     </div>
 </div>
 
+<!-- All Quotes Table -->
+<div class="table-section active" id="all-section">
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Client / Subject</th>
+                    <th>Total</th>
+                    <th>Created</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody class="quotes-tbody" data-status="all">
+                @forelse($quotes as $quote)
+                <tr>
+                    <td>
+                        <div style="font-weight: 600; color: #334155;">{{ $quote->subject ?? 'Unknown Subject' }}</div>
+                        <div style="font-size: 0.85rem; color: #64748b;">{{ $quote->client->name ?? 'Unknown Client' }}</div>
+                    </td>
+                    <td>₱{{ number_format($quote->total_amount, 2) }}</td>
+                    <td>{{ \Carbon\Carbon::parse($quote->quote_date)->format('M d, Y') }}</td>
+                    <td>
+                        <span class="status-badge {{ strtolower($quote->status) }}">{{ ucfirst($quote->status) }}</span>
+                    </td>
+                    <td>
+                        @if(strtolower($quote->status) === 'archived')
+                        <button class="btn-action view-btn" data-quote="{{ json_encode($quote) }}" title="View Details">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        @else
+                        <button class="btn-action edit-btn" data-quote="{{ json_encode($quote) }}" title="Edit">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn-action delete-btn" data-id="{{ $quote->id }}" title="Delete">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                        @endif
+                    </td>
+                </tr>
+                @empty
+                <tr>
+                    <td colspan="5" style="text-align: center; padding: 20px; color: #64748b;">No quotes found.</td>
+                </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+</div>
+
 <!-- Pending Quotes Table -->
-<div class="table-section active" id="pending-section">
+<div class="table-section" id="pending-section">
     <div class="table-container">
         <table class="data-table">
             <thead>

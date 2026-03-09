@@ -402,7 +402,7 @@
                 <div class="input-group">
                     <label>REASON / REFERENCE</label>
                     <div class="input-with-icon">
-                        <input type="text" id="outReason" class="dark-input" placeholder="e.g. Sales Order #9988" style="width:100%; padding: 10px;">
+                        <input type="text" id="outReason" class="dark-input" placeholder="e.g. Sales Order #9988" style="width:100%; padding: 10px;" required>
                     </div>
                 </div>
                 <div class="modal-actions" style="margin-top: 25px; align-items: center;">
@@ -457,7 +457,7 @@
             document.getElementById('item_id').value = '';
             document.getElementById('itemForm').reset();
             document.getElementById('itemModalTitle').innerText = 'Add New Item';
-            document.getElementById('initialStockGroup').style.display = 'block'; // Show stock input
+            document.getElementById('initialStockGroup').style.display = 'block'; 
             addItemModal.style.display = 'flex';
         });
 
@@ -474,10 +474,7 @@
                 document.getElementById('itemSku').value = btn.dataset.sku;
                 document.getElementById('itemCategory').value = btn.dataset.category;
                 document.getElementById('itemPrice').value = btn.dataset.price;
-
-                // Hide Stock input during edit (Stock adjustments should use In/Out)
                 document.getElementById('initialStockGroup').style.display = 'none';
-
                 document.getElementById('itemModalTitle').innerText = 'Edit Item';
                 addItemModal.style.display = 'flex';
             });
@@ -636,6 +633,11 @@
         document.getElementById('stockOutForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const id = document.getElementById('outItemId').value;
+            const reason = document.getElementById('outReason').value;
+            if (!reason.trim()) {
+                showError('Stocking out should have a reason.');
+                return;
+            }
             try {
                 const res = await fetch(`/inventory/${id}/stock-out`, {
                     method: 'POST',
@@ -646,7 +648,7 @@
                     },
                     body: JSON.stringify({
                         quantity: document.getElementById('outQuantity').value,
-                        reason: document.getElementById('outReason').value
+                        reason: reason
                     })
                 });
                 const data = await res.json();

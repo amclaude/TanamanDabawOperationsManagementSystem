@@ -144,6 +144,51 @@
         border-color: #e5e7eb;
         pointer-events: none;
     }
+
+    /* --- TABS STYLES --- */
+    .tabs {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+        margin-top: 10px;
+        justify-content: flex-end;
+    }
+    .tab-btn {
+        padding: 8px 16px;
+        border: 1px solid #ddd;
+        background: white;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+    .tab-btn[data-status="all"] {
+        background: white;
+        color: #64748b;
+        border-color: #ddd;
+    }
+    .tab-btn[data-status="draft"] {
+        background: #f1f5f9;
+        color: #64748b;
+        border-color: #e2e8f0;
+    }
+    .tab-btn[data-status="paid"] {
+        background: #dcfce7;
+        color: #16a34a;
+        border-color: #bbf7d0;
+    }
+    .tab-btn.active {
+        background: #319B72;
+        color: white;
+        border-color: #319B72;
+    }
+    .tab-btn:hover {
+        background: #f0f0f0;
+    }
+    .tab-btn.active:hover {
+        background: #2a7a5f;
+    }
 </style>
 
 <div class="page-header">
@@ -158,6 +203,12 @@
             <i class="fas fa-search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #64748b;"></i>
         </div>
     </div>
+</div>
+
+<div class="tabs">
+    <button class="tab-btn active" data-status="all">All</button>
+    <button class="tab-btn" data-status="draft">Draft</button>
+    <button class="tab-btn" data-status="paid">Paid</button>
 </div>
 
 <div class="table-container">
@@ -324,6 +375,8 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     document.addEventListener('DOMContentLoaded', () => {
+
+        let currentStatusFilter = 'all';
 
         // --- DROPDOWN LOGIC ---
         document.querySelectorAll('.btn-menu-trigger').forEach(trigger => {
@@ -702,8 +755,9 @@
                     body: JSON.stringify(payload)
                 });
                 if (response.ok) {
+                    const result = await response.json();
                     resetModalState();
-                    Swal.fire({ icon: 'success', title: 'Success!', timer: 1500, showConfirmButton: false }).then(() => window.location.reload());
+                    Swal.fire({ icon: 'success', title: result.message || 'Success!', timer: 1500, showConfirmButton: false }).then(() => window.location.reload());
                 } else {
                     const result = await response.json();
                     Swal.fire('Error', result.message || 'Validation failed.', 'error');
@@ -717,19 +771,43 @@
             }
         });
 
-        // Search
+        // Search and Filter
         const searchInput = document.getElementById('searchInput');
         const tableBody = document.getElementById('invoiceTableBody');
-        if (searchInput && tableBody) {
-            searchInput.addEventListener('keyup', function() {
-                const filter = searchInput.value.toLowerCase();
-                const rows = tableBody.getElementsByTagName('tr');
-                for (let i = 0; i < rows.length; i++) {
-                    let text = rows[i].innerText.toLowerCase();
-                    rows[i].style.display = text.includes(filter) ? "" : "none";
+
+        function filterTable() {
+            const filter = searchInput.value.toLowerCase();
+            const rows = tableBody.getElementsByTagName('tr');
+            for (let i = 0; i < rows.length; i++) {
+                const row = rows[i];
+                const statusBadge = row.querySelector('.status-badge');
+                if (!statusBadge) {
+                    // Empty row, show only if no filters
+                    row.style.display = (filter === '' && currentStatusFilter === 'all') ? "" : "none";
+                    continue;
                 }
-            });
+                const status = statusBadge.classList[1];
+                const text = row.innerText.toLowerCase();
+                let show = true;
+                if (currentStatusFilter !== 'all' && status !== currentStatusFilter) show = false;
+                if (!text.includes(filter)) show = false;
+                row.style.display = show ? "" : "none";
+            }
         }
+
+        if (searchInput && tableBody) {
+            searchInput.addEventListener('keyup', filterTable);
+        }
+
+        // Tabs
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentStatusFilter = this.dataset.status;
+                filterTable();
+            });
+        });
     });
 </script>
 @endpush

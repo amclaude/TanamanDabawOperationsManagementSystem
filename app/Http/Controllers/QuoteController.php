@@ -102,11 +102,37 @@ class QuoteController extends Controller
         }
 
         try {
-            DB::transaction(function () use ($request, $quote) {
+            $changesDetected = false;
+            DB::transaction(function () use ($request, $quote, &$changesDetected) {
+                // Check if basic quote details changed
+                if ($quote->client_id != $request->client_id || 
+                    $quote->subject != $request->subject ||
+                    $quote->quote_date != $request->quote_date || 
+                    $quote->valid_until != $request->valid_until) {
+                    $changesDetected = true;
+                }
+                
                 // Recalculate Total
                 $grandTotal = 0;
                 foreach ($request->items as $item) {
                     $grandTotal += ($item['quantity'] * $item['price']);
+                }
+
+                // Check if items changed
+                $existingItems = $quote->items()->get();
+                if (count($existingItems) != count($request->items)) {
+                    $changesDetected = true;
+                } else {
+                    foreach ($existingItems as $index => $existingItem) {
+                        $newItem = $request->items[$index] ?? null;
+                        if (!$newItem || 
+                            $existingItem->description != $newItem['description'] ||
+                            $existingItem->quantity != $newItem['quantity'] ||
+                            $existingItem->price != $newItem['price']) {
+                            $changesDetected = true;
+                            break;
+                        }
+                    }
                 }
 
                 // Update Quote Details
@@ -131,9 +157,11 @@ class QuoteController extends Controller
                 }
             });
 
+            $message = $changesDetected ? 'Quote updated successfully' : 'No Changes were made';
             return response()->json([
                 'status' => 'success',
-                'message' => 'Quote updated successfully',
+                'message' => $message,
+                'changesDetected' => $changesDetected
             ]);
         } catch (\Exception $e) {
             return response()->json([

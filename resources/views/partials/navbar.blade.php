@@ -47,10 +47,9 @@
 <script>
     const menuToggle = document.getElementById('menu-toggle');
     const sidebar = document.querySelector('.sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
 
     if (menuToggle && sidebar) {
-        // If small screen, slide the sidebar in/out using 'active'.
-        // On larger screens toggle 'collapsed' to show icons-only.
         const setSidebarCollapsed = (collapsed) => {
             if (collapsed) {
                 sidebar.classList.add('collapsed');
@@ -58,12 +57,10 @@
                 sidebar.classList.remove('collapsed');
             }
             try { localStorage.setItem('sidebarCollapsed', collapsed ? '1' : '0'); } catch (e) {}
-            // also set a cookie so server-side rendering can keep sidebar collapsed across full page loads
             try {
                 var maxAge = 60*60*24*365; // 1 year
                 document.cookie = 'sidebarCollapsed=' + (collapsed ? '1' : '0') + '; path=/; max-age=' + maxAge + ';';
             } catch (e) {}
-            // update html attribute immediately so CSS rules tied to it take effect without reload
             try {
                 if (collapsed) {
                     document.documentElement.setAttribute('data-sidebar-collapsed', '1');
@@ -75,22 +72,25 @@
 
         menuToggle.addEventListener('click', (e) => {
             e.stopPropagation();
-            // Toggle icons-only state
-            sidebar.classList.toggle('collapsed');
-            // Persist state
-            setSidebarCollapsed(sidebar.classList.contains('collapsed'));
-            // For small screens also toggle slide-in
             if (window.innerWidth < 768) {
-                sidebar.classList.toggle('active');
+                const isActive = sidebar.classList.toggle('active');
+                if (overlay) overlay.classList.toggle('show', isActive);
+                document.documentElement.classList.toggle('sidebar-open', isActive);
+                document.body.classList.toggle('sidebar-open', isActive);
+                return;
             }
+            sidebar.classList.toggle('collapsed');
+            setSidebarCollapsed(sidebar.classList.contains('collapsed'));
         });
 
-        // Clicking outside should only close the slide-in (active) sidebar.
         document.addEventListener('click', (e) => {
             if (sidebar.classList.contains('active') &&
                 !sidebar.contains(e.target) &&
                 e.target !== menuToggle) {
                 sidebar.classList.remove('active');
+                if (overlay) overlay.classList.remove('show');
+                document.documentElement.classList.remove('sidebar-open');
+                document.body.classList.remove('sidebar-open');
             }
         });
     }
@@ -99,13 +99,17 @@
         const dropdownMenu = document.getElementById('profile-dropdown');
         const dropdownIcon = document.querySelector('.dropdown-icon');
 
-        // Apply persisted sidebar state (icons-only) if set
         try {
             const persisted = localStorage.getItem('sidebarCollapsed');
-            if (persisted === '1') {
+            if (persisted === '1' && window.innerWidth >= 768) {
                 sidebar.classList.add('collapsed');
-            } else if (persisted === '0') {
+            } else if (persisted === '0' && window.innerWidth >= 768) {
                 sidebar.classList.remove('collapsed');
+            } else if (window.innerWidth < 768) {
+                document.documentElement.removeAttribute('data-sidebar-collapsed');
+                localStorage.setItem('sidebarCollapsed', '0');
+                var maxAge = 60*60*24*365;
+                document.cookie = 'sidebarCollapsed=0; path=/; max-age=' + maxAge + ';';
             }
         } catch (e) {}
 
@@ -130,6 +134,26 @@
                 }
             });
         }
+        if (overlay) {
+            overlay.addEventListener('click', function() {
+                if (sidebar.classList.contains('active')) {
+                    sidebar.classList.remove('active');
+                    overlay.classList.remove('show');
+                    document.documentElement.classList.remove('sidebar-open');
+                    document.body.classList.remove('sidebar-open');
+                }
+            });
+        }
+        window.addEventListener('resize', function() {
+            if (window.innerWidth >= 768) {
+                if (sidebar.classList.contains('active')) {
+                    sidebar.classList.remove('active');
+                }
+                if (overlay) overlay.classList.remove('show');
+                document.documentElement.classList.remove('sidebar-open');
+                document.body.classList.remove('sidebar-open');
+            }
+        });
     });
 </script>
 @endpush

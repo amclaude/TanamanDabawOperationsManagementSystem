@@ -492,6 +492,24 @@ html[data-sidebar-collapsed="1"] .sidebar .sidebar-menu li a .label { display: n
 html[data-sidebar-collapsed="1"] .sidebar .sidebar-footer .sign-out-link { justify-content: center; }
 
 
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 50px;
+    left: 0;
+    width: 100%;
+    height: calc(100vh - 50px);
+    background: rgba(0,0,0,0.4);
+    z-index: 1000;
+}
+.sidebar-overlay.show {
+    display: block;
+}
+html.sidebar-open,
+body.sidebar-open {
+    overflow: hidden;
+}
+
 
 
 
@@ -512,6 +530,7 @@ html[data-sidebar-collapsed="1"] .sidebar .sidebar-footer .sign-out-link { justi
     height: 100%;
 
 }
+
 
 
 
@@ -1299,44 +1318,46 @@ html[data-sidebar-collapsed="1"] .sidebar .sidebar-footer .sign-out-link { justi
 
     }
 
-
-
     #menu-toggle { display: inline-block; margin-right: 6px; background: none; border: none; color: inherit; cursor: pointer; }
 
     .sidebar {
 
         position: fixed;
-
-        left: -260px; 
-
-        top: 50px; 
-
+        top: 50px;
+        left: 0;
         height: calc(100vh - 50px);
-
         z-index: 1001;
-
-        transition: left 0.3s ease; 
-
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
     }
-
-
 
     .sidebar.active {
 
-        left: 0; 
+        transform: translateX(0);
 
     }
 
-
+    .sidebar.collapsed {
+        width: 260px;
+    }
+    .sidebar.collapsed .sidebar-menu { padding: 20px 15px; }
+    .sidebar.collapsed .sidebar-menu li a { justify-content: flex-start; padding: 12px 20px; }
+    .sidebar.collapsed .sidebar-menu li a i { margin-right: 10px; }
+    html[data-sidebar-collapsed="1"] .sidebar {
+        width: 260px;
+    }
+    html[data-sidebar-collapsed="1"] .sidebar .sidebar-menu { padding: 20px 15px; }
+    html[data-sidebar-collapsed="1"] .sidebar .sidebar-menu li a { justify-content: flex-start; padding: 12px 20px; }
+    html[data-sidebar-collapsed="1"] .sidebar .sidebar-menu li a i { margin-right: 10px; }
+    html[data-sidebar-collapsed="1"] .sidebar .sidebar-menu li a .label { display: inline; }
+    .sidebar.collapsed .sidebar-menu li a .label { display: inline; }
 
     .dashboard-container {
 
         display: block; 
 
+
     }
-
-
-
     .main-content {
 
         padding: 20px; 
@@ -1445,8 +1466,7 @@ html[data-sidebar-collapsed="1"] .sidebar .sidebar-footer .sign-out-link { justi
 
     .status-badge { padding: 5px 12px; font-size: 0.8rem; }
 
-    .sidebar { position: fixed; left: 0; top: 50px; transform: translateX(-100%); z-index: 999; }
-
+    .sidebar { position: fixed; left: 0; top: 50px; transform: translateX(-100%); z-index: 1001; }
     .sidebar.active { transform: translateX(0); }
 
     .login-card { width: 95%; max-width: 100%; padding: 20px; }

@@ -8,10 +8,9 @@
     <title>@yield('title', 'Tanaman')</title>
 
     <script>
-        // Apply persisted sidebar-collapsed state before styles render to avoid layout jump
         (function(){
             try {
-                if (localStorage.getItem('sidebarCollapsed') === '1') {
+                if (window.innerWidth >= 768 && localStorage.getItem('sidebarCollapsed') === '1') {
                     document.documentElement.setAttribute('data-sidebar-collapsed', '1');
                 }
             } catch (e) {}
@@ -28,6 +27,7 @@
 <body class="dashboard-body">
 
     @include('partials.navbar')
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
 
     <div class="dashboard-container">
         @if(in_array(auth()->user()->role, ['Admin', 'Operations Manager']))

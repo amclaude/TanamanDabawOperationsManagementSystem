@@ -33,13 +33,13 @@ class ProjectController extends Controller
                 })
 
                 ->orderBy('project_start_date', 'asc')
-                ->paginate(10);
+                ->paginate(10)->onEachSide(1);
 
             return view('projectcrew', compact('projects'));
         }
         $query = Project::with(['client', 'headLandscaper', 'fieldCrew']);
 
-        $projects = $query->latest()->paginate(10);
+        $projects = $query->latest()->paginate(10)->onEachSide(1);
 
         $pendingQuotes = Quote::where('status', 'pending')->get();
         $clients = Client::all();

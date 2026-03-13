@@ -458,9 +458,7 @@
     </div>
 </div>
 
-<div class="pagination-wrapper mt-4">
-    {{ $quotes->appends(request()->query())->links('pagination::bootstrap-5') }}
-</div>
+@include('partials.pagination', ['data' => $quotes->appends(request()->query())])
 
 <div class="modal-overlay" id="addQuoteModal">
     <div class="modal-box">

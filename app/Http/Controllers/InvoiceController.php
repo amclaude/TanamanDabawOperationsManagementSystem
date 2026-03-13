@@ -22,7 +22,7 @@ class InvoiceController extends Controller
             'project' => function ($query) {
                 $query->withTrashed();
             },
-        ])->latest()->paginate(10);
+        ])->latest()->paginate(10)->onEachSide(1);
 
         $projects = Project::where('is_active', true)->get();
 

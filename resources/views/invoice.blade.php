@@ -326,9 +326,7 @@
     </table>
 </div>
 
-<div class="pagination-wrapper mt-4">
-    {{ $invoices->appends(request()->query())->links('pagination::bootstrap-5') }}
-</div>
+@include('partials.pagination', ['data' => $invoices->appends(request()->query())])
 
 {{-- MODAL --}}
 <div class="modal-overlay" id="invoiceModal">

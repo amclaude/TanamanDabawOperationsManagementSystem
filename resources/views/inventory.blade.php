@@ -284,9 +284,7 @@
     </table>
 </div>
 
-<div class="pagination-wrapper mt-4">
-    {{ $inventoryItems->appends(request()->query())->links('pagination::bootstrap-5') }}
-</div>
+@include('partials.pagination', ['data' => $inventoryItems->appends(request()->query())])
 
 <div class="modal-overlay" id="historyModal">
     {{-- Made this modal wider (max-width: 800px) so the table fits well --}}

@@ -14,7 +14,7 @@ class EmployeeController extends Controller
         // Get all users except admin
         $employees = User::where('role', '!=', 'Admin')
             ->orderBy('created_at', 'desc')
-            ->paginate(10);
+            ->paginate(10)->onEachSide(1);
 
         return view('employees', compact('employees'));
     }

@@ -12,7 +12,7 @@ class InventoryController extends Controller
 {
     public function index(Request $request)
     {
-        $inventoryItems = Inventory::with('category')->orderBy('created_at', 'desc')->paginate(10);
+        $inventoryItems = Inventory::with('category')->orderBy('created_at', 'desc')->paginate(10)->onEachSide(1);
         $categories = InventoryCategory::all();
 
         $transactions = InventoryTransaction::with('inventory')

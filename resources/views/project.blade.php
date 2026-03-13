@@ -269,9 +269,7 @@
     </table>
 </div>
 
-<div class="pagination-wrapper mt-4">
-    {{ $projects->appends(request()->query())->links('pagination::bootstrap-5') }}
-</div>
+@include('partials.pagination', ['data' => $projects->appends(request()->query())])
 
 <div class="modal-overlay" id="addProjectModal">
     <div class="modal-box">

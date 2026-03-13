@@ -130,9 +130,7 @@
 
 </div>
 
-<div class="pagination-wrapper mt-4">
-    {{ $clients->appends(request()->query())->links('pagination::bootstrap-5') }}
-</div>
+@include('partials.pagination', ['data' => $clients->appends(request()->query())])
 
 <div class="modal-overlay" id="clientModal">
     <div class="modal-box">

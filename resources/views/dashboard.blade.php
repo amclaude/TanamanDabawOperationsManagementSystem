@@ -224,7 +224,16 @@
     <p>Welcome back, here's what's happening today.</p>
 </header>
 
-<div class="stats-grid">
+<div class="stats-grid loading-scope dashboard-loading-scope" data-loading-scope="network">
+    <div class="skeleton-overlay" aria-hidden="true">
+        <div class="skeleton dashboard-skeleton-card"></div>
+        <div class="skeleton dashboard-skeleton-card"></div>
+        <div class="skeleton dashboard-skeleton-card"></div>
+        <div class="skeleton dashboard-skeleton-card"></div>
+        <div class="skeleton dashboard-skeleton-card"></div>
+        <div class="skeleton dashboard-skeleton-card"></div>
+    </div>
+    <div class="loading-content" style="display: contents;">
     {{-- ... Stats Cards ... --}}
     <div class="stat-card">
         <div class="stat-text">
@@ -267,6 +276,7 @@
             <p class="number">{{ $totalInventoryItems }}</p><a href="{{ route('inventory') }}" class="details-link">View details</a>
         </div>
         <div class="stat-icon icon-bg-red"><i class="fas fa-boxes"></i></div>
+    </div>
     </div>
 </div>
 

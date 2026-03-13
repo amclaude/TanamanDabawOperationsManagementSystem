@@ -205,7 +205,7 @@
     <div class="profile-body">
         <div class="profile-header-row">
             <div class="profile-avatar-wrapper">
-                <img src="{{ asset('images/images.jpg') }}" alt="{{ $user->name }}" class="profile-avatar-large">
+                <img src="{{ asset('images/images.jpg') }}" alt="{{ $user->name }}" class="profile-avatar-large" loading="lazy">
                 <div class="camera-btn"><i class="fas fa-camera"></i></div>
             </div>
             <button type="button" class="btn-primary" id="editProfileBtn" style="background-color: #f1f5f9; color: #334155; border: 1px solid #cbd5e1;">

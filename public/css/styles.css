@@ -2458,3 +2458,161 @@ select:focus {
     border-color: #e5e7eb;
 
 }
+
+/* UI refresh: typography, depth, interactions, and loading */
+
+:root {
+    --tanaman-sidebar: #1a4d32;
+    --tanaman-sidebar-accent: #236846;
+    --tanaman-hover-tint: rgba(26, 77, 50, 0.08);
+}
+
+* {
+    font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    font-size: 1rem;
+    line-height: 1.5rem;
+    letter-spacing: 0.01em;
+}
+
+h1,
+h2 {
+    font-size: 1.5rem;
+    line-height: 2rem;
+    letter-spacing: 0.01em;
+}
+
+h3,
+h4,
+h5,
+h6 {
+    letter-spacing: 0.01em;
+}
+
+button,
+a,
+.btn-primary,
+.btn-save,
+.btn-cancel,
+.action-btn,
+.btn-action,
+.status-tab,
+.data-table tbody tr {
+    transition: background-color 200ms ease-in-out, color 200ms ease-in-out, box-shadow 200ms ease-in-out, transform 200ms ease-in-out, border-color 200ms ease-in-out;
+}
+
+.sidebar {
+    background: linear-gradient(180deg, var(--tanaman-sidebar) 0%, var(--tanaman-sidebar-accent) 100%);
+    box-shadow: 4px 0 18px rgba(0, 0, 0, 0.15), inset -1px 0 0 rgba(255, 255, 255, 0.08);
+}
+
+.sidebar-menu li a:hover,
+.sign-out-link:hover {
+    background-color: rgba(255, 255, 255, 0.14);
+}
+
+.data-table tbody tr:hover {
+    background-color: var(--tanaman-hover-tint);
+}
+
+.btn-primary:hover,
+.btn-save:hover {
+    box-shadow: 0 6px 14px rgba(26, 77, 50, 0.18);
+}
+
+.btn-primary:active,
+.btn-save:active,
+.btn-action:active,
+.action-btn:active {
+    transform: translateY(1px);
+}
+
+.request-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    z-index: 50000;
+    opacity: 0;
+    background: linear-gradient(90deg, #319b72 0%, #5fd1a3 35%, #319b72 70%, #5fd1a3 100%);
+    background-size: 220% 100%;
+    transition: opacity 200ms ease-in-out;
+    pointer-events: none;
+}
+
+.request-progress.is-active {
+    opacity: 1;
+    animation: requestBarSlide 1.1s linear infinite;
+}
+
+@keyframes requestBarSlide {
+    from {
+        background-position: 200% 0;
+    }
+    to {
+        background-position: -20% 0;
+    }
+}
+
+.skeleton {
+    border-radius: 8px;
+    background: linear-gradient(90deg, #e2e8f0 10%, #f8fafc 50%, #e2e8f0 90%);
+    background-size: 220% 100%;
+    animation: skeletonShimmer 1.35s linear infinite;
+}
+
+@keyframes skeletonShimmer {
+    from {
+        background-position: 200% 0;
+    }
+    to {
+        background-position: -20% 0;
+    }
+}
+
+.loading-scope {
+    position: relative;
+}
+
+.loading-scope .skeleton-overlay {
+    display: none;
+}
+
+.loading-scope.is-loading .skeleton-overlay {
+    display: block;
+}
+
+.loading-scope.is-loading .loading-content {
+    opacity: 0.4;
+    pointer-events: none;
+}
+
+.table-loading-scope .skeleton-overlay {
+    position: absolute;
+    inset: 0;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.88);
+    padding: 20px;
+    z-index: 4;
+}
+
+.table-skeleton-row {
+    height: 44px;
+    margin-bottom: 10px;
+}
+
+.dashboard-loading-scope .skeleton-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 25px;
+}
+
+.dashboard-skeleton-card {
+    height: 136px;
+}

@@ -20,6 +20,9 @@
 
     <link rel="stylesheet" href="{{ asset('css/styles.css') }}">
     <link rel="stylesheet" href="{{ asset('css/pagination.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
@@ -262,6 +265,62 @@
                 }
             });
         });
+
+        (function() {
+            const loadingState = {
+                activeRequests: 0,
+            };
+
+            const progressBar = document.createElement('div');
+            progressBar.className = 'request-progress';
+            document.addEventListener('DOMContentLoaded', () => {
+                document.body.appendChild(progressBar);
+            });
+
+            const updateProgressVisibility = () => {
+                document.querySelectorAll('[data-loading-scope="network"]').forEach((scope) => {
+                    scope.classList.toggle('is-loading', loadingState.activeRequests > 0);
+                });
+
+                if (loadingState.activeRequests > 0) {
+                    progressBar.classList.add('is-active');
+                    return;
+                }
+
+                progressBar.classList.remove('is-active');
+            };
+
+            window.TanamanLoader = {
+                setLoading(scope, isLoading) {
+                    if (!scope) {
+                        return;
+                    }
+
+                    scope.classList.toggle('is-loading', Boolean(isLoading));
+                },
+                async withLoading(scope, callback) {
+                    this.setLoading(scope, true);
+                    try {
+                        return await callback();
+                    } finally {
+                        this.setLoading(scope, false);
+                    }
+                },
+            };
+
+            const nativeFetch = window.fetch.bind(window);
+            window.fetch = async (...args) => {
+                loadingState.activeRequests += 1;
+                updateProgressVisibility();
+
+                try {
+                    return await nativeFetch(...args);
+                } finally {
+                    loadingState.activeRequests = Math.max(0, loadingState.activeRequests - 1);
+                    updateProgressVisibility();
+                }
+            };
+        })();
     </script>
     @stack('scripts')
 </body>

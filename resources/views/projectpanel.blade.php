@@ -513,7 +513,7 @@
 
 <div class="image-modal-overlay" id="imageLightbox">
     <span class="image-modal-close" onclick="closeLightbox()">&times;</span>
-    <img class="image-modal-content" id="expandedImg">
+    <img class="image-modal-content" id="expandedImg" loading="lazy" alt="Expanded project image">
 </div>
 
 <div class="tab-content" id="team">

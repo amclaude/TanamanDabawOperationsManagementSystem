@@ -6,6 +6,9 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     
     <title>Login | Tanaman</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('css/styles.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
@@ -14,7 +17,7 @@
     <nav class="navbar">
         <div class="nav-brand">
             <div class="logo-container">
-                <img src="{{ asset('images/TanamanLogo.png') }}" alt="Logo" class="nav-logo">
+                <img src="{{ asset('images/TanamanLogo.png') }}" alt="Logo" class="nav-logo" loading="lazy">
             </div>
             <span class="company-name">Tanaman</span>
         </div>

@@ -6,7 +6,7 @@
 
         <div class="nav-brand">
         <div class="logo-container">
-            <img src="{{ asset('images/TanamanLogo.png') }}" alt="Logo" class="nav-logo">
+            <img src="{{ asset('images/TanamanLogo.png') }}" alt="Logo" class="nav-logo" loading="lazy">
         </div>
         <span class="company-name">Tanaman</span>
         </div>
@@ -17,7 +17,7 @@
             <span class="profile-name">{{ implode(' ', array_slice(explode(' ', trim(Auth::user()->name ?? '')), 0, 2)) }}</span>
             <span class="profile-role">{{ Auth::user()->role }}</span>
         </div>
-        <img src="{{ asset('images/images.jpg') }}" class="profile-pic">
+        <img src="{{ asset('images/images.jpg') }}" class="profile-pic" alt="Profile picture" loading="lazy">
         <i class="fas fa-chevron-down dropdown-icon"></i>
 
         <div class="dropdown-menu" id="profile-dropdown">

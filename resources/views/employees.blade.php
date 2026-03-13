@@ -137,7 +137,15 @@
     </div>
 </div>
 
-<div class="table-container">
+<div class="table-container loading-scope table-loading-scope" data-loading-scope="network">
+    <div class="skeleton-overlay" aria-hidden="true">
+        <div class="skeleton table-skeleton-row"></div>
+        <div class="skeleton table-skeleton-row"></div>
+        <div class="skeleton table-skeleton-row"></div>
+        <div class="skeleton table-skeleton-row"></div>
+        <div class="skeleton table-skeleton-row"></div>
+    </div>
+    <div class="loading-content">
     <table class="data-table">
         <thead>
             <tr>
@@ -198,6 +206,7 @@
             @endforelse
         </tbody>
     </table>
+    </div>
 </div>
 
 @include('partials.pagination', ['data' => $employees->appends(request()->query())])

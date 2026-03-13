@@ -310,7 +310,15 @@
 
 <!-- All Quotes Table -->
 <div class="table-section active" id="all-section">
-    <div class="table-container">
+    <div class="table-container loading-scope table-loading-scope" data-loading-scope="network">
+        <div class="skeleton-overlay" aria-hidden="true">
+            <div class="skeleton table-skeleton-row"></div>
+            <div class="skeleton table-skeleton-row"></div>
+            <div class="skeleton table-skeleton-row"></div>
+            <div class="skeleton table-skeleton-row"></div>
+            <div class="skeleton table-skeleton-row"></div>
+        </div>
+        <div class="loading-content">
         <table class="data-table">
             <thead>
                 <tr>
@@ -355,12 +363,21 @@
                 @endforelse
             </tbody>
         </table>
+        </div>
     </div>
 </div>
 
 <!-- Pending Quotes Table -->
 <div class="table-section" id="pending-section">
-    <div class="table-container">
+    <div class="table-container loading-scope table-loading-scope" data-loading-scope="network">
+        <div class="skeleton-overlay" aria-hidden="true">
+            <div class="skeleton table-skeleton-row"></div>
+            <div class="skeleton table-skeleton-row"></div>
+            <div class="skeleton table-skeleton-row"></div>
+            <div class="skeleton table-skeleton-row"></div>
+            <div class="skeleton table-skeleton-row"></div>
+        </div>
+        <div class="loading-content">
         <table class="data-table">
             <thead>
                 <tr>
@@ -405,12 +422,21 @@
                 @endforelse
             </tbody>
         </table>
+        </div>
     </div>
 </div>
 
 <!-- Accepted Quotes Table -->
 <div class="table-section" id="accepted-section">
-    <div class="table-container">
+    <div class="table-container loading-scope table-loading-scope" data-loading-scope="network">
+        <div class="skeleton-overlay" aria-hidden="true">
+            <div class="skeleton table-skeleton-row"></div>
+            <div class="skeleton table-skeleton-row"></div>
+            <div class="skeleton table-skeleton-row"></div>
+            <div class="skeleton table-skeleton-row"></div>
+            <div class="skeleton table-skeleton-row"></div>
+        </div>
+        <div class="loading-content">
         <table class="data-table">
             <thead>
                 <tr>
@@ -455,6 +481,7 @@
                 @endforelse
             </tbody>
         </table>
+        </div>
     </div>
 </div>
 

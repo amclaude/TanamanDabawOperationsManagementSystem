@@ -37,6 +37,20 @@
     tr[data-href]:hover {
         background-color: #f9f9f9;
     }
+
+    .input-invalid,
+    .input-invalid:focus {
+        border: 2px solid #dc3545 !important;
+        box-shadow: none !important;
+    }
+
+    .field-error {
+        color: #dc3545;
+        font-size: 0.78rem;
+        margin-top: 4px;
+        display: block;
+        min-height: 16px;
+    }
 </style>
 
 <div class="page-header">
@@ -127,27 +141,31 @@
             <span class="close-modal-btn">&times;</span>
         </div>
 
-        <form class="modal-form">
+        <form class="modal-form" id="clientForm" novalidate>
             <input type="hidden" id="client_id">
 
             <div class="input-group">
-                <label>Client Name</label>
-                <input id="name" type="text" required>
+                <label for="name">Client Name</label>
+                <input id="name" type="text" maxlength="100" data-error-target="nameError" required>
+                <span id="nameError" class="field-error"></span>
             </div>
 
             <div class="input-group">
-                <label>Email Address</label>
-                <input id="email" type="email" required>
+                <label for="email">Email Address</label>
+                <input id="email" type="email" maxlength="255" data-error-target="emailError" required>
+                <span id="emailError" class="field-error"></span>
             </div>
 
             <div class="input-group">
-                <label>Phone Number</label>
-                <input id="phone" placeholder="+09xxxxxxxxx" type="tel" pattern="(?:\+63|0)9\d{2}-\d{3}-\d{4}|(?:\+63|0)2\d{1}-\d{3}-\d{4}" required>
+                <label for="phone">Phone Number</label>
+                <input id="phone" placeholder="09123456789" type="tel" maxlength="11" data-error-target="phoneError" required>
+                <span id="phoneError" class="field-error"></span>
             </div>
 
             <div class="input-group">
-                <label>Address</label>
-                <input id="address" type="text" required>
+                <label for="address">Address</label>
+                <input id="address" type="text" maxlength="255" data-error-target="addressError" required>
+                <span id="addressError" class="field-error"></span>
             </div>
 
             <div class="modal-actions">
@@ -179,10 +197,80 @@
         const phoneField = document.getElementById('phone');
         const addressField = document.getElementById('address');
 
-        console.log('Elements found:', {
-            modal: !!modal,
-            addBtn: !!addBtn,
-            saveBtn: !!saveBtn
+        const emailRegex = /^[\w.\-]+@[a-zA-Z\d\-]+\.[a-zA-Z]{2,}$/;
+        const phoneRegex = /^09\d{9}$/;
+
+        const setFieldError = (field, message) => {
+            field.classList.add('input-invalid');
+            const errorTargetId = field.dataset.errorTarget;
+            const errorElement = document.getElementById(errorTargetId);
+            if (errorElement) {
+                errorElement.textContent = message;
+            }
+        };
+
+        const clearFieldError = (field) => {
+            field.classList.remove('input-invalid');
+            const errorTargetId = field.dataset.errorTarget;
+            const errorElement = document.getElementById(errorTargetId);
+            if (errorElement) {
+                errorElement.textContent = '';
+            }
+        };
+
+        const clearFormErrors = () => {
+            [nameField, emailField, phoneField, addressField].forEach(clearFieldError);
+        };
+
+        const validateForm = () => {
+            clearFormErrors();
+
+            const name = nameField.value.trim();
+            const email = emailField.value.trim();
+            const phone = phoneField.value.trim();
+            const address = addressField.value.trim();
+            const isEditMode = Boolean(clientIdField.value);
+            let isValid = true;
+
+            if (!name) {
+                setFieldError(nameField, 'Client name is required.');
+                isValid = false;
+            } else if (name.length > 100) {
+                setFieldError(nameField, 'Client name must not exceed 100 characters.');
+                isValid = false;
+            }
+
+            if (!email) {
+                setFieldError(emailField, 'Email address is required.');
+                isValid = false;
+            } else if (email && !emailRegex.test(email)) {
+                setFieldError(emailField, 'Please enter a valid email, e.g., abc@email.com');
+                isValid = false;
+            }
+
+            if (!phone) {
+                setFieldError(phoneField, 'Phone number is required.');
+                isValid = false;
+            } else if (!phoneRegex.test(phone)) {
+                setFieldError(phoneField, 'Please enter a valid PH number, e.g., 09123456789');
+                isValid = false;
+            }
+
+            if (!address) {
+                setFieldError(addressField, 'Address is required.');
+                isValid = false;
+            } else if (address.length > 255) {
+                setFieldError(addressField, 'Address must not exceed 255 characters.');
+                isValid = false;
+            }
+
+            return isValid;
+        };
+
+        [nameField, emailField, phoneField, addressField].forEach((field) => {
+            field.addEventListener('input', () => {
+                clearFieldError(field);
+            });
         });
 
         // --- OPEN MODAL (ADD) ---
@@ -190,8 +278,6 @@
             addBtn.addEventListener('click', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
-                
-                console.log('Add button clicked');
 
                 // Clear form
                 clientIdField.value = '';
@@ -199,6 +285,7 @@
                 emailField.value = '';
                 phoneField.value = '';
                 addressField.value = '';
+                clearFormErrors();
 
                 modalTitle.innerText = "Add New Client";
                 modal.style.display = 'flex';
@@ -207,7 +294,10 @@
 
         // --- CLOSE MODAL ---
         const closeModal = () => {
-            if (modal) modal.style.display = 'none';
+            if (modal) {
+                modal.style.display = 'none';
+                clearFormErrors();
+            }
         };
         
         if (closeBtn) closeBtn.addEventListener('click', closeModal);
@@ -226,48 +316,18 @@ if (saveBtn) {
     saveBtn.addEventListener('click', async (e) => {
         e.preventDefault();
 
-        // VALIDATION: Check if any field is empty
+        if (!validateForm()) {
+            const firstInvalidField = document.querySelector('.input-invalid');
+            if (firstInvalidField) {
+                firstInvalidField.focus();
+            }
+            return;
+        }
+
         const name = nameField.value.trim();
         const email = emailField.value.trim();
         const phone = phoneField.value.trim();
         const address = addressField.value.trim();
-
-        if (!name || !email || !phone || !address) {
-            Swal.fire({
-                title: 'Error',
-                html: '<div class="swal2-html-container">Fields are required.</div>',
-                icon: 'error',
-                confirmButtonColor: '#d33',
-                confirmButtonText: 'OK'
-            });
-            return;
-        }
-
-
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
-            Swal.fire({
-                title: 'Error',
-                html: '<div class="swal2-html-container">Wrong email format.</div>',
-                icon: 'error',
-                confirmButtonColor: '#d33',
-                confirmButtonText: 'OK'
-            });
-            return;
-        }
-
-        const phoneRegex = /^(?:\+63|0)9\d{9}$/;
-        const cleanPhone = phone.replace(/-/g, '').replace(/\s/g, '');
-        if (!phoneRegex.test(cleanPhone)) {
-            Swal.fire({
-                title: 'Error',
-                html: '<div class="swal2-html-container">Wrong phone format.</div>',
-                icon: 'error',
-                confirmButtonColor: '#d33',
-                confirmButtonText: 'OK'
-            });
-            return;
-        }
 
         // If validation passes, proceed with save
         const id = clientIdField.value;
@@ -316,6 +376,21 @@ if (saveBtn) {
                     window.location.reload();
                 });
             } else {
+                if (response.status === 422 && result.errors) {
+                    if (result.errors.name?.length) {
+                        setFieldError(nameField, result.errors.name[0]);
+                    }
+                    if (result.errors.email?.length) {
+                        setFieldError(emailField, result.errors.email[0]);
+                    }
+                    if (result.errors.phone?.length) {
+                        setFieldError(phoneField, result.errors.phone[0]);
+                    }
+                    if (result.errors.address?.length) {
+                        setFieldError(addressField, result.errors.address[0]);
+                    }
+                }
+
                 Swal.fire('Error', result.message || 'Validation Failed', 'error');
             }
         } catch (error) {
@@ -339,6 +414,7 @@ if (saveBtn) {
                     emailField.value = editBtn.dataset.email;
                     phoneField.value = editBtn.dataset.phone;
                     addressField.value = editBtn.dataset.address;
+                    clearFormErrors();
 
                     modalTitle.innerText = "Edit Client";
                     modal.style.display = 'flex';

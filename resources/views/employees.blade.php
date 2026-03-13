@@ -98,6 +98,20 @@
         width: auto;
         margin: 0;
     }
+
+    .input-invalid,
+    .input-invalid:focus {
+        border: 2px solid #dc3545 !important;
+        box-shadow: none !important;
+    }
+
+    .field-error {
+        color: #dc3545;
+        font-size: 0.78rem;
+        margin-top: 4px;
+        display: block;
+        min-height: 16px;
+    }
 </style>
 @endpush
 
@@ -197,17 +211,19 @@
             <span class="close-modal-btn">&times;</span>
         </div>
 
-        <form class="modal-form">
+        <form class="modal-form" id="employeeForm" novalidate>
             <input type="hidden" id="emp_id">
 
             <div class="input-group">
                 <label>Employee Name</label>
                 <input type="text" id="name" placeholder="e.g. John Doe" required>
+                <span class="field-error" id="name-error"></span>
             </div>
 
             <div class="input-group">
                 <label>Email Address</label>
                 <input type="email" id="email" placeholder="contact@company.com" required>
+                <span class="field-error" id="email-error"></span>
             </div>
 
             <div class="input-group">
@@ -223,6 +239,7 @@
                     <option value="Head Landscaper">Head Landscaper</option>
                     <option value="Field Crew">Field Crew</option>
                 </select>
+                <span class="field-error" id="role-error"></span>
                 <p class="helper-text">* Field Crew members cannot log in to the dashboard.</p>
             </div>
 
@@ -238,6 +255,7 @@
                         <span style="color: #991b1b;">Inactive (Deactivated)</span>
                     </label>
                 </div>
+                <span class="field-error" id="status-error"></span>
                 <p class="helper-text">Inactive users cannot log in.</p>
             </div>
 
@@ -263,11 +281,16 @@
         const modal = document.getElementById('employeeModal');
         const modalTitle = document.getElementById('modalTitle');
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        const form = document.getElementById('employeeForm');
 
         const nameInput = document.getElementById('name');
         const emailInput = document.getElementById('email');
         const roleInput = document.getElementById('role');
         const idInput = document.getElementById('emp_id');
+        const nameError = document.getElementById('name-error');
+        const emailError = document.getElementById('email-error');
+        const roleError = document.getElementById('role-error');
+        const statusError = document.getElementById('status-error');
 
         const statusContainer = document.getElementById('statusContainer');
         const statusActive = document.getElementById('statusActive');
@@ -295,6 +318,90 @@
         const closeModal = () => {
             modal.style.display = 'none';
         };
+
+        const emailRegex = /^[\w.\-]+@[a-zA-Z\d\-]+\.[a-zA-Z]{2,}$/;
+
+        const setFieldError = (input, errorEl, message) => {
+            if (input) {
+                input.classList.add('input-invalid');
+            }
+            if (errorEl) {
+                errorEl.textContent = message;
+            }
+        };
+
+        const clearFieldError = (input, errorEl) => {
+            if (input) {
+                input.classList.remove('input-invalid');
+            }
+            if (errorEl) {
+                errorEl.textContent = '';
+            }
+        };
+
+        const clearFormErrors = () => {
+            clearFieldError(nameInput, nameError);
+            clearFieldError(emailInput, emailError);
+            clearFieldError(roleInput, roleError);
+            clearFieldError(null, statusError);
+        };
+
+        const validateName = () => {
+            const nameValue = nameInput.value.trim();
+            if (!nameValue) {
+                setFieldError(nameInput, nameError, 'Name is required');
+                return false;
+            }
+            if (nameValue.length > 255) {
+                setFieldError(nameInput, nameError, 'Name must not exceed 255 characters');
+                return false;
+            }
+            clearFieldError(nameInput, nameError);
+            return true;
+        };
+
+        const validateEmail = () => {
+            const emailValue = emailInput.value.trim();
+            if (!emailValue) {
+                setFieldError(emailInput, emailError, 'Email address is required');
+                return false;
+            }
+            if (!emailRegex.test(emailValue)) {
+                setFieldError(emailInput, emailError, 'Invalid email format');
+                return false;
+            }
+            clearFieldError(emailInput, emailError);
+            return true;
+        };
+
+        const validateRole = () => {
+            if (!roleInput.value) {
+                setFieldError(roleInput, roleError, 'Role is required');
+                return false;
+            }
+            clearFieldError(roleInput, roleError);
+            return true;
+        };
+
+        const validateStatus = () => {
+            const selectedStatus = document.querySelector('input[name="status"]:checked');
+            if (statusContainer.style.display !== 'none' && !selectedStatus) {
+                setFieldError(null, statusError, 'Status is required');
+                return false;
+            }
+            clearFieldError(null, statusError);
+            return true;
+        };
+
+        const validateForm = () => {
+            clearFormErrors();
+            const isNameValid = validateName();
+            const isEmailValid = validateEmail();
+            const isRoleValid = validateRole();
+            const isStatusValid = validateStatus();
+            return isNameValid && isEmailValid && isRoleValid && isStatusValid;
+        };
+
         document.querySelector('.close-modal-btn').addEventListener('click', closeModal);
         document.querySelector('.btn-cancel').addEventListener('click', closeModal);
 
@@ -305,6 +412,7 @@
                 nameInput.value = '';
                 emailInput.value = '';
                 roleInput.value = '';
+                clearFormErrors();
 
                 // Hide Status (Default is Active)
                 statusContainer.style.display = 'none';
@@ -333,6 +441,7 @@
                 nameInput.value = editBtn.dataset.name;
                 emailInput.value = editBtn.dataset.email;
                 roleInput.value = editBtn.dataset.role;
+                clearFormErrors();
 
                 // Show Status Radio Buttons
                 statusContainer.style.display = 'block';
@@ -399,12 +508,26 @@
             }
         });
 
+        nameInput.addEventListener('input', () => clearFieldError(nameInput, nameError));
+        emailInput.addEventListener('input', () => clearFieldError(emailInput, emailError));
+        roleInput.addEventListener('change', () => clearFieldError(roleInput, roleError));
+        statusActive.addEventListener('change', () => clearFieldError(null, statusError));
+        statusInactive.addEventListener('change', () => clearFieldError(null, statusError));
+
         // SAVE BUTTON
-        document.querySelector('.btn-save').addEventListener('click', async (e) => {
+        form.addEventListener('submit', async (e) => {
             e.preventDefault();
 
+            if (!validateForm()) {
+                const firstInvalidField = document.querySelector('.input-invalid');
+                if (firstInvalidField) {
+                    firstInvalidField.focus();
+                }
+                return;
+            }
+
             const id = idInput.value;
-            const statusValue = document.querySelector('input[name="status"]:checked').value;
+            const statusValue = document.querySelector('input[name="status"]:checked')?.value || 'Active';
 
             const data = {
                 name: nameInput.value,
@@ -438,14 +561,31 @@
                 if (response.ok) {
                     closeModal();
                     Swal.fire({
-                        title: 'Success',
+                        title: 'Success!',
                         text: result.message,
                         icon: 'success',
                         timer: 1500,
                         showConfirmButton: false
                     }).then(() => window.location.reload());
                 } else {
-                    Swal.fire('Error', result.message || 'Validation failed', 'error');
+                    const errors = result.errors || {};
+
+                    if (errors.name?.[0]) {
+                        setFieldError(nameInput, nameError, errors.name[0]);
+                    }
+                    if (errors.email?.[0]) {
+                        setFieldError(emailInput, emailError, errors.email[0]);
+                    }
+                    if (errors.role?.[0]) {
+                        setFieldError(roleInput, roleError, errors.role[0]);
+                    }
+                    if (errors.status?.[0]) {
+                        setFieldError(null, statusError, errors.status[0]);
+                    }
+
+                    if (!Object.keys(errors).length) {
+                        Swal.fire('Error', result.message || 'Validation failed', 'error');
+                    }
                 }
             } catch (error) {
                 console.error(error);

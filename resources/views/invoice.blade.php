@@ -120,6 +120,10 @@
     .modal-box::-webkit-scrollbar { display: none; }
 
     .item-row { display: flex; gap: 10px; margin-bottom: 8px; align-items: center; }
+    .item-cell { display: flex; flex-direction: column; min-width: 0; }
+    .item-cell-desc { flex: 2; }
+    .item-cell-qty { flex: 0.5; }
+    .item-cell-price { flex: 1; }
     .modal-section-title { font-weight: 600; color: #334155; margin-bottom: 10px; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; margin-top: 15px; }
     
     /* Buttons */
@@ -188,6 +192,20 @@
     }
     .tab-btn.active:hover {
         background: #2a7a5f;
+    }
+
+    .input-invalid,
+    .input-invalid:focus {
+        border: 2px solid #dc3545 !important;
+        box-shadow: none !important;
+    }
+
+    .field-error {
+        color: #dc3545;
+        font-size: 0.78rem;
+        margin-top: 4px;
+        display: block;
+        min-height: 16px;
     }
 </style>
 
@@ -331,6 +349,7 @@
                     <option value="{{ $proj->id }}" data-client-id="{{ $proj->client_id }}" data-client-name="{{ $proj->client->name }}">{{ $proj->project_name }}</option>
                     @endforeach
                 </select>
+                <span class="field-error" id="projectId-error"></span>
                 <small style="color:#64748b;">Selecting a project will auto-fill the client and items.</small>
             </div>
 
@@ -338,16 +357,19 @@
                 <label>Client</label>
                 <input type="text" id="clientNameDisplay" readonly style="background:#f1f5f9; color:#475569; font-weight:500;" placeholder="Auto-filled from Project">
                 <input type="hidden" id="clientId">
+                <span class="field-error" id="clientId-error"></span>
             </div>
 
             <div style="display:flex; gap:15px; margin-top:15px;">
                 <div class="input-group" style="flex:1;">
                     <label>Issue Date</label>
                     <input type="date" id="issueDate" required>
+                    <span class="field-error" id="issueDate-error"></span>
                 </div>
                 <div class="input-group" style="flex:1;">
                     <label>Due Date</label>
                     <input type="date" id="dueDate" required>
+                    <span class="field-error" id="dueDate-error"></span>
                 </div>
             </div>
 
@@ -355,6 +377,7 @@
             <div id="itemsContainer">
                 <div style="color:#94a3b8; font-style:italic; padding:10px; text-align:center;" id="emptyStateMsg">Select a project to load items...</div>
             </div>
+            <span class="field-error" id="items-error"></span>
 
             <button type="button" id="addItemBtn" style="color:#319B72; background:none; border:none; cursor:pointer; margin-top:10px; font-weight:600; display:flex; align-items:center; gap:5px;">
                 <i class="fas fa-plus-circle"></i> Add Custom Item
@@ -363,6 +386,7 @@
             <div style="margin-top:20px; text-align:right; border-top: 2px solid #f1f5f9; padding-top:15px;">
                 <label style="color:#64748b;">Total Amount:</label>
                 <span id="displayTotal" style="font-size:1.4em; font-weight:bold; color:#1e293b; margin-left:10px;">₱0.00</span>
+                <span class="field-error" id="displayTotal-error"></span>
             </div>
 
             <div class="modal-actions" style="margin-top:25px; text-align:right;">
@@ -444,8 +468,48 @@
         const totalDisplay = document.getElementById('displayTotal');
         const emptyStateMsg = document.getElementById('emptyStateMsg');
         const saveBtn = document.getElementById('saveBtn');
+        const issueDateInput = document.getElementById('issueDate');
+        const dueDateInput = document.getElementById('dueDate');
 
         let isEditMode = false;
+        let rowCounter = 0;
+        let submitOriginalText = saveBtn.innerText;
+
+        const setFieldError = (input, errorId, message) => {
+            if (input) input.classList.add('input-invalid');
+            const errorEl = document.getElementById(errorId);
+            if (errorEl) errorEl.textContent = message;
+        };
+
+        const clearFieldError = (input, errorId) => {
+            if (input) input.classList.remove('input-invalid');
+            const errorEl = document.getElementById(errorId);
+            if (errorEl) errorEl.textContent = '';
+        };
+
+        const clearAllFormErrors = () => {
+            clearFieldError(projectSelect, 'projectId-error');
+            clearFieldError(clientDisplay, 'clientId-error');
+            clearFieldError(issueDateInput, 'issueDate-error');
+            clearFieldError(dueDateInput, 'dueDate-error');
+            const itemsError = document.getElementById('items-error');
+            if (itemsError) itemsError.textContent = '';
+            const totalError = document.getElementById('displayTotal-error');
+            if (totalError) totalError.textContent = '';
+            itemsContainer.querySelectorAll('.item-desc, .item-qty, .item-price').forEach(input => input.classList.remove('input-invalid'));
+            itemsContainer.querySelectorAll('.field-error[data-item-error]').forEach(error => error.textContent = '');
+        };
+
+        const setSubmittingState = (isSubmitting, label = 'Processing...') => {
+            if (isSubmitting) {
+                submitOriginalText = saveBtn.innerText;
+                saveBtn.innerText = label;
+                saveBtn.disabled = true;
+                return;
+            }
+            saveBtn.innerText = submitOriginalText;
+            validateInvoiceForm();
+        };
 
         const resetModalState = () => {
             modal.style.display = 'none';
@@ -465,6 +529,8 @@
                 el.disabled = false;
             });
             cancelBtn.innerText = "Cancel";
+            clearAllFormErrors();
+            saveBtn.disabled = false;
         };
 
         const openModal = () => { modal.style.display = 'flex'; };
@@ -479,6 +545,7 @@
                 const due = new Date();
                 due.setDate(due.getDate() + 15);
                 document.getElementById('dueDate').value = due.toISOString().split('T')[0];
+                validateInvoiceForm();
                 openModal();
             });
         }
@@ -495,7 +562,9 @@
                         itemsContainer.innerHTML = '';
                         itemsContainer.appendChild(emptyStateMsg);
                         clientDisplay.value = '';
+                        clientIdInput.value = '';
                         calculateTotal();
+                        validateInvoiceForm();
                     }
                     return;
                 }
@@ -515,6 +584,7 @@
                         createRow('Consultation Service', 1, 0);
                     }
                     calculateTotal();
+                    validateInvoiceForm();
                 } catch (error) {
                     itemsContainer.innerHTML = 'Error loading project data.';
                 }
@@ -525,28 +595,186 @@
             if (document.getElementById('emptyStateMsg')) document.getElementById('emptyStateMsg').remove();
             const div = document.createElement('div');
             div.classList.add('item-row');
+            const rowIndex = rowCounter++;
             div.innerHTML = `
-                <input type="text" class="item-desc" value="${desc}" placeholder="Description" style="flex:2; padding:8px; border:1px solid #ddd; border-radius:4px; outline:none;" required>
-                <input type="number" class="item-qty" value="${qty}" min="1" placeholder="Qty" style="flex:0.5; padding:8px; border:1px solid #ddd; border-radius:4px; outline:none;" required>
-                <input type="number" class="item-price" value="${price}" min="0"  step="0.01" placeholder="Price" style="flex:1; padding:8px; border:1px solid #ddd; border-radius:4px; outline:none;" required>
+                <div class="item-cell item-cell-desc">
+                    <input type="text" class="item-desc" id="invoice-item-desc-${rowIndex}" value="${desc}" placeholder="Description" style="padding:8px; border:1px solid #ddd; border-radius:4px; outline:none;" required>
+                    <span class="field-error" data-item-error="desc"></span>
+                </div>
+                <div class="item-cell item-cell-qty">
+                    <input type="number" class="item-qty" id="invoice-item-qty-${rowIndex}" value="${qty}" min="1" placeholder="Qty" style="padding:8px; border:1px solid #ddd; border-radius:4px; outline:none;" required>
+                    <span class="field-error" data-item-error="qty"></span>
+                </div>
+                <div class="item-cell item-cell-price">
+                    <input type="number" class="item-price" id="invoice-item-price-${rowIndex}" value="${price}" min="0" step="0.01" placeholder="Price" style="padding:8px; border:1px solid #ddd; border-radius:4px; outline:none;" required>
+                    <span class="field-error" data-item-error="price"></span>
+                </div>
                 <button type="button" class="remove-btn" style="color:#ef4444; border:none; background:none; cursor:pointer; font-size:1.1rem; padding:0 5px;" title="Remove Item">&times;</button>
             `;
-            div.querySelectorAll('input').forEach(i => i.addEventListener('input', calculateTotal));
-            div.querySelector('.remove-btn').addEventListener('click', () => { div.remove(); calculateTotal(); });
+            div.querySelectorAll('input').forEach(i => i.addEventListener('input', () => {
+                calculateTotal();
+                validateInvoiceForm();
+            }));
+            div.querySelector('.remove-btn').addEventListener('click', () => {
+                div.remove();
+                calculateTotal();
+                validateInvoiceForm();
+            });
             itemsContainer.appendChild(div);
             calculateTotal();
         }
 
-        document.getElementById('addItemBtn').addEventListener('click', () => createRow());
+        document.getElementById('addItemBtn').addEventListener('click', () => {
+            createRow();
+            validateInvoiceForm();
+        });
 
         function calculateTotal() {
             let total = 0;
-            document.querySelectorAll('.item-row').forEach(row => {
+            itemsContainer.querySelectorAll('.item-row').forEach(row => {
                 const q = parseFloat(row.querySelector('.item-qty').value) || 0;
                 const p = parseFloat(row.querySelector('.item-price').value) || 0;
                 total += (q * p);
             });
             totalDisplay.innerText = '₱' + total.toLocaleString('en-US', { minimumFractionDigits: 2 });
+            return total;
+        }
+
+        function validateInvoiceItemRow(row) {
+            let valid = true;
+            const descInput = row.querySelector('.item-desc');
+            const qtyInput = row.querySelector('.item-qty');
+            const priceInput = row.querySelector('.item-price');
+            const descError = row.querySelector('[data-item-error="desc"]');
+            const qtyError = row.querySelector('[data-item-error="qty"]');
+            const priceError = row.querySelector('[data-item-error="price"]');
+
+            descInput.classList.remove('input-invalid');
+            qtyInput.classList.remove('input-invalid');
+            priceInput.classList.remove('input-invalid');
+            if (descError) descError.textContent = '';
+            if (qtyError) qtyError.textContent = '';
+            if (priceError) priceError.textContent = '';
+
+            if (!descInput.value.trim()) {
+                descInput.classList.add('input-invalid');
+                if (descError) descError.textContent = 'Description is required';
+                valid = false;
+            }
+
+            const qty = parseFloat(qtyInput.value);
+            if (Number.isNaN(qty) || qty < 1) {
+                qtyInput.classList.add('input-invalid');
+                if (qtyError) qtyError.textContent = 'Quantity must be at least 1';
+                valid = false;
+            }
+
+            const price = parseFloat(priceInput.value);
+            if (Number.isNaN(price) || price < 0) {
+                priceInput.classList.add('input-invalid');
+                if (priceError) priceError.textContent = 'Price must be 0 or greater';
+                valid = false;
+            }
+
+            return valid;
+        }
+
+        function validateInvoiceForm() {
+            if (form.classList.contains('view-mode-active')) {
+                saveBtn.disabled = true;
+                return false;
+            }
+
+            let valid = true;
+            const today = new Date().toISOString().split('T')[0];
+
+            if (!isEditMode && !projectSelect.value) {
+                setFieldError(projectSelect, 'projectId-error', 'Project is required');
+                valid = false;
+            } else {
+                clearFieldError(projectSelect, 'projectId-error');
+            }
+
+            if (!clientIdInput.value) {
+                setFieldError(clientDisplay, 'clientId-error', 'Client is required');
+                valid = false;
+            } else {
+                clearFieldError(clientDisplay, 'clientId-error');
+            }
+
+            if (!issueDateInput.value) {
+                setFieldError(issueDateInput, 'issueDate-error', 'Issue date is required');
+                valid = false;
+            } else {
+                clearFieldError(issueDateInput, 'issueDate-error');
+            }
+
+            if (!dueDateInput.value) {
+                setFieldError(dueDateInput, 'dueDate-error', 'Due date is required');
+                valid = false;
+            } else if (dueDateInput.value < today) {
+                setFieldError(dueDateInput, 'dueDate-error', 'Due date must be today or a future date');
+                valid = false;
+            } else if (issueDateInput.value && dueDateInput.value < issueDateInput.value) {
+                setFieldError(dueDateInput, 'dueDate-error', 'Due date must be on or after issue date');
+                valid = false;
+            } else {
+                clearFieldError(dueDateInput, 'dueDate-error');
+            }
+
+            const rows = itemsContainer.querySelectorAll('.item-row');
+            const itemsError = document.getElementById('items-error');
+            if (!rows.length) {
+                if (itemsError) itemsError.textContent = 'At least one item is required';
+                valid = false;
+            } else {
+                if (itemsError) itemsError.textContent = '';
+                rows.forEach(row => {
+                    if (!validateInvoiceItemRow(row)) valid = false;
+                });
+            }
+
+            const total = calculateTotal();
+            const totalError = document.getElementById('displayTotal-error');
+            if (total < 0) {
+                if (totalError) totalError.textContent = 'Total amount must be valid';
+                valid = false;
+            } else if (totalError) {
+                totalError.textContent = '';
+            }
+
+            saveBtn.disabled = !valid;
+            return valid;
+        }
+
+        function applyBackendErrors(errors = {}) {
+            if (errors.project_id?.[0]) setFieldError(projectSelect, 'projectId-error', errors.project_id[0]);
+            if (errors.client_id?.[0]) setFieldError(clientDisplay, 'clientId-error', errors.client_id[0]);
+            if (errors.issue_date?.[0]) setFieldError(issueDateInput, 'issueDate-error', errors.issue_date[0]);
+            if (errors.due_date?.[0]) setFieldError(dueDateInput, 'dueDate-error', errors.due_date[0]);
+            if (errors.items?.[0]) {
+                const itemsError = document.getElementById('items-error');
+                if (itemsError) itemsError.textContent = errors.items[0];
+            }
+
+            itemsContainer.querySelectorAll('.item-row').forEach((row, index) => {
+                const descError = errors[`items.${index}.desc`]?.[0];
+                const qtyError = errors[`items.${index}.qty`]?.[0];
+                const priceError = errors[`items.${index}.price`]?.[0];
+
+                if (descError) {
+                    row.querySelector('.item-desc').classList.add('input-invalid');
+                    row.querySelector('[data-item-error="desc"]').textContent = descError;
+                }
+                if (qtyError) {
+                    row.querySelector('.item-qty').classList.add('input-invalid');
+                    row.querySelector('[data-item-error="qty"]').textContent = qtyError;
+                }
+                if (priceError) {
+                    row.querySelector('.item-price').classList.add('input-invalid');
+                    row.querySelector('[data-item-error="price"]').textContent = priceError;
+                }
+            });
         }
 
         // Edit Mode
@@ -580,6 +808,7 @@
                 }
                 openModal();
                 calculateTotal();
+                validateInvoiceForm();
             }
         });
 
@@ -610,6 +839,7 @@
                     invoiceData.items.forEach(item => createRow(item.description, item.quantity, item.price));
                 }
                 itemsContainer.querySelectorAll('input').forEach(el => el.disabled = true);
+                saveBtn.disabled = true;
                 openModal();
                 calculateTotal();
             }
@@ -717,25 +947,23 @@
             e.preventDefault();
             if(form.classList.contains('view-mode-active')) return;
 
-            const originalText = saveBtn.innerText;
-            saveBtn.innerText = 'Processing...';
-            saveBtn.disabled = true;
+            clearAllFormErrors();
+            if (!validateInvoiceForm()) {
+                const firstInvalidField = form.querySelector('.input-invalid');
+                if (firstInvalidField) firstInvalidField.focus();
+                return;
+            }
+
+            setSubmittingState(true);
 
             const items = [];
-            document.querySelectorAll('.item-row').forEach(row => {
+            itemsContainer.querySelectorAll('.item-row').forEach(row => {
                 items.push({
                     desc: row.querySelector('.item-desc').value,
                     qty: row.querySelector('.item-qty').value,
                     price: row.querySelector('.item-price').value
                 });
             });
-
-            if (items.length === 0) {
-                Swal.fire('Error', 'Please add at least one item.', 'warning');
-                saveBtn.innerText = originalText;
-                saveBtn.disabled = false;
-                return;
-            }
 
             const payload = {
                 project_id: projectSelect.value,
@@ -764,15 +992,22 @@
                     Swal.fire({ icon: 'success', title: result.message || 'Success!', timer: 1500, showConfirmButton: false }).then(() => window.location.reload());
                 } else {
                     const result = await response.json();
+                    if (result.errors) {
+                        applyBackendErrors(result.errors);
+                        validateInvoiceForm();
+                    }
                     Swal.fire('Error', result.message || 'Validation failed.', 'error');
-                    saveBtn.innerText = originalText;
-                    saveBtn.disabled = false;
                 }
             } catch (e) {
                 Swal.fire('Error', 'System error occurred.', 'error');
-                saveBtn.innerText = originalText;
-                saveBtn.disabled = false;
+            } finally {
+                setSubmittingState(false);
             }
+        });
+
+        [projectSelect, issueDateInput, dueDateInput].forEach(input => {
+            input.addEventListener('change', validateInvoiceForm);
+            input.addEventListener('input', validateInvoiceForm);
         });
 
         // Search and Filter

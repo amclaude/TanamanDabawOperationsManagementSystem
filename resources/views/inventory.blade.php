@@ -125,6 +125,60 @@
         font-weight: 600;
         color: #64748b;
     }
+
+    .input-invalid,
+    .input-invalid:focus {
+        border: 2px solid #1a4d32 !important;
+        background-color: #f0f9f4;
+        box-shadow: none !important;
+    }
+
+    #itemForm .input-invalid,
+    #itemForm .input-invalid:focus {
+        border: 2px solid #dc3545 !important;
+        background-color: #fef2f2;
+    }
+
+    .field-error {
+        color: #dc3545;
+        font-size: 0.78rem;
+        margin-top: 4px;
+        display: block;
+        min-height: 16px;
+    }
+
+    .required-reason-highlight {
+        border: 1px solid #e2e8f0 !important;
+        background-color: #fff;
+    }
+
+    .required-quantity-highlight:placeholder-shown:focus {
+        border: 1px solid #0f172a !important;
+        box-shadow: none !important;
+    }
+
+    .required-quantity-highlight.input-invalid,
+    .required-quantity-highlight.input-invalid:focus,
+    .required-reason-highlight.input-invalid,
+    .required-reason-highlight.input-invalid:focus {
+        border: 2px solid #dc3545 !important;
+        background-color: #fef2f2;
+    }
+
+    .projected-balance {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #334155;
+    }
+
+    .projected-balance.is-negative {
+        color: #dc3545;
+    }
+
+    .btn-save:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+    }
 </style>
 
 <div class="page-header">
@@ -197,7 +251,7 @@
                         <button class="btn-stock-out"
                             data-id="{{ $item->id }}"
                             data-sku="{{ $item->sku }}"
-                            data-stock="{{ $item->stock }}">
+                            data-stock="{{ $item->stock_level }}">
                             <i class="fas fa-arrow-down" style="font-size: 0.7rem;"></i> Out
                         </button>
                     </div>
@@ -210,7 +264,7 @@
                         data-sku="{{ $item->sku }}"
                         data-category="{{ $item->category_id }}"
                         data-price="{{ $item->price }}"
-                        data-stock="{{ $item->stock }}">
+                        data-stock="{{ $item->stock_level }}">
                         <i class="fas fa-pen"></i>
                     </button>
 
@@ -291,41 +345,46 @@
             <span class="close-modal-btn" id="closeAddItem">&times;</span>
         </div>
 
-        <form class="modal-form" id="itemForm">
+        <form class="modal-form" id="itemForm" novalidate>
             <input type="hidden" id="item_id">
 
             <div class="input-group">
                 <label>Item Name</label>
-                <input type="text" id="itemName" placeholder="e.g. Fertilizer" required>
+                <input type="text" id="itemName" placeholder="e.g. Fertilizer" data-error-target="itemNameError">
+                <span class="field-error" id="itemNameError"></span>
             </div>
             <div style="display: flex; gap: 15px;">
                 <div class="input-group" style="flex:1;">
                     <label>SKU</label>
-                    <input type="text" id="itemSku" placeholder="e.g. FUR-001" required>
+                    <input type="text" id="itemSku" placeholder="e.g. FUR-001" data-error-target="itemSkuError">
+                    <span class="field-error" id="itemSkuError"></span>
                 </div>
                 <div class="input-group" style="flex:1;">
                     <label>Category</label>
-                    <select id="itemCategory" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px;">
+                    <select id="itemCategory" data-error-target="itemCategoryError" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 6px;">
                         @foreach ($categories as $category)
                         <option value="{{ $category->id }}">{{ $category->name }}</option>
                         @endforeach
                     </select>
+                    <span class="field-error" id="itemCategoryError"></span>
                 </div>
             </div>
             <div style="display: flex; gap: 15px;">
                 <div class="input-group" style="flex:1;">
                     <label>Price (₱)</label>
-                    <input type="number" id="itemPrice" step="0.01" min="0" placeholder="0.00" required>
+                    <input type="number" id="itemPrice" step="0.01" min="0" placeholder="0.00" data-error-target="itemPriceError">
+                    <span class="field-error" id="itemPriceError"></span>
                 </div>
                 {{-- Initial Stock is only visible on CREATE, hidden on UPDATE --}}
                 <div class="input-group" style="flex:1;" id="initialStockGroup">
                     <label>Initial Stock</label>
-                    <input type="number" id="itemStock" min="0" placeholder="0">
+                    <input type="number" id="itemStock" min="0" placeholder="0" data-error-target="itemStockError">
+                    <span class="field-error" id="itemStockError"></span>
                 </div>
             </div>
             <div class="modal-actions">
                 <button type="button" class="btn-cancel" id="cancelAddItem">Cancel</button>
-                <button type="submit" class="btn-save">Save Item</button>
+                <button type="submit" class="btn-save" id="itemSaveBtn">Save Item</button>
             </div>
         </form>
     </div>
@@ -354,21 +413,23 @@
                 </div>
             </div>
 
-            <form class="stock-form" id="stockInForm">
+            <form class="stock-form" id="stockInForm" novalidate>
                 <input type="hidden" id="inItemId">
                 <div class="input-group">
                     <label>QUANTITY TO ADD</label>
-                    <input type="number" id="inQuantity" class="dark-input" placeholder="0" min="1" required>
+                    <input type="number" id="inQuantity" class="dark-input required-quantity-highlight" placeholder="0" min="1" data-error-target="inQuantityError">
+                    <span class="field-error" id="inQuantityError"></span>
                 </div>
                 <div class="input-group">
                     <label>REASON / REFERENCE</label>
                     <div class="input-with-icon">
-                        <input type="text" id="inReason" class="dark-input" placeholder="e.g. Shipment #1234" style="width:100%; padding: 10px;">
+                        <input type="text" id="inReason" class="dark-input" placeholder="e.g. Shipment #1234" data-error-target="inReasonError" style="width:100%; padding: 10px;">
                     </div>
+                    <span class="field-error" id="inReasonError"></span>
                 </div>
                 <div class="modal-actions" style="margin-top: 25px; align-items: center;">
                     <button type="button" class="btn-cancel" id="cancelStockIn">Cancel</button>
-                    <button type="submit" class="btn-save" style="background-color: #10b981;">Confirm Stock In</button>
+                    <button type="submit" class="btn-save" id="stockInSubmitBtn" style="background-color: #1a4d32;">Confirm Stock In</button>
                 </div>
             </form>
         </div>
@@ -397,21 +458,27 @@
                 </div>
             </div>
 
-            <form class="stock-form" id="stockOutForm">
+            <form class="stock-form" id="stockOutForm" novalidate>
                 <input type="hidden" id="outItemId">
                 <div class="input-group">
                     <label>QUANTITY TO REMOVE</label>
-                    <input type="number" id="outQuantity" class="dark-input" placeholder="0" min="1" required>
+                    <input type="number" id="outQuantity" class="dark-input required-quantity-highlight" placeholder="0" min="1" data-error-target="outQuantityError">
+                    <span class="field-error" id="outQuantityError"></span>
                 </div>
                 <div class="input-group">
-                    <label>REASON / REFERENCE</label>
+                    <label>PROJECTED BALANCE</label>
+                    <div class="projected-balance" id="projectedBalanceDisplay">--</div>
+                </div>
+                <div class="input-group">
+                    <label style="color: #1a4d32; font-weight: 700;">REASON / REFERENCE (REQUIRED)</label>
                     <div class="input-with-icon">
-                        <input type="text" id="outReason" class="dark-input" placeholder="e.g. Sales Order #9988" style="width:100%; padding: 10px;">
+                        <input type="text" id="outReason" class="dark-input required-reason-highlight" placeholder="e.g. Sales Order #9988" data-error-target="outReasonError" style="width:100%; padding: 10px;">
                     </div>
+                    <span class="field-error" id="outReasonError"></span>
                 </div>
                 <div class="modal-actions" style="margin-top: 25px; align-items: center;">
                     <button type="button" class="btn-cancel" id="cancelStockOut">Cancel</button>
-                    <button type="submit" class="btn-save btn-red" style="background-color: #ef4444; color:white;">Confirm Stock Out</button>
+                    <button type="submit" class="btn-save btn-red" id="stockOutSubmitBtn" style="background-color: #ef4444; color:white;">Confirm Stock Out</button>
                 </div>
             </form>
         </div>
@@ -423,9 +490,18 @@
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', () => {
-
-        // --- Shared Utilities ---
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        const validation = window.TanamanValidation;
+
+        const setFieldError = validation.setFieldError;
+        const clearFieldError = validation.clearFieldError;
+        const clearFormErrors = validation.clearFormErrors;
+        const focusFirstInvalidField = validation.focusFirstInvalidField;
+        const setSubmittingState = validation.setSubmittingState;
+        const lockSubmitUntilFieldChange = validation.lockSubmitUntilFieldChange;
+        const setValidationLock = validation.setValidationLock;
+        const setRuleLock = validation.setRuleLock;
+        const bindClearOnInput = validation.bindClearOnInput;
 
         function showSuccess(message) {
             Swal.fire({
@@ -451,36 +527,110 @@
         if (closeHistory) closeHistory.addEventListener('click', () => historyModal.style.display = 'none');
         if (closeHistoryBtn) closeHistoryBtn.addEventListener('click', () => historyModal.style.display = 'none');
 
-        // Add / Edit Item Logic ---
+        // Add / Edit Item Logic
         const addItemModal = document.getElementById('addItemModal');
         const itemForm = document.getElementById('itemForm');
+        const itemSaveBtn = document.getElementById('itemSaveBtn');
+        const itemIdField = document.getElementById('item_id');
+        const itemNameField = document.getElementById('itemName');
+        const itemSkuField = document.getElementById('itemSku');
+        const itemCategoryField = document.getElementById('itemCategory');
+        const itemPriceField = document.getElementById('itemPrice');
+        const itemStockField = document.getElementById('itemStock');
+        const initialStockGroup = document.getElementById('initialStockGroup');
+        const itemFields = [itemNameField, itemSkuField, itemCategoryField, itemPriceField, itemStockField];
+
+        const validateItemForm = () => {
+            clearFormErrors(itemFields);
+
+            const isEdit = Boolean(itemIdField.value);
+            const name = itemNameField.value.trim();
+            const sku = itemSkuField.value.trim();
+            const categoryId = itemCategoryField.value;
+            const priceRaw = itemPriceField.value.trim();
+            const stockRaw = itemStockField.value.trim();
+            let isValid = true;
+
+            if (!name) {
+                setFieldError(itemNameField, 'Item name is required.');
+                isValid = false;
+            } else if (name.length > 255) {
+                setFieldError(itemNameField, 'Item name must not exceed 255 characters.');
+                isValid = false;
+            }
+
+            if (!sku) {
+                setFieldError(itemSkuField, 'SKU is required.');
+                isValid = false;
+            }
+
+            if (!categoryId) {
+                setFieldError(itemCategoryField, 'Category is required.');
+                isValid = false;
+            }
+
+            if (!priceRaw) {
+                setFieldError(itemPriceField, 'Price is required.');
+                isValid = false;
+            } else if (Number.isNaN(Number(priceRaw)) || Number(priceRaw) < 0) {
+                setFieldError(itemPriceField, 'Price must be a valid number greater than or equal to 0.');
+                isValid = false;
+            }
+
+            if (!isEdit) {
+                if (!stockRaw) {
+                    setFieldError(itemStockField, 'Initial stock is required.');
+                    isValid = false;
+                } else if (!Number.isInteger(Number(stockRaw)) || Number(stockRaw) < 0) {
+                    setFieldError(itemStockField, 'Initial stock must be a whole number greater than or equal to 0.');
+                    isValid = false;
+                }
+            }
+
+            return isValid;
+        };
+
+        bindClearOnInput(itemFields, clearFieldError);
 
         // Buttons
         document.getElementById('addItemBtn').addEventListener('click', () => {
-            // Reset Form for "Add"
-            document.getElementById('item_id').value = '';
-            document.getElementById('itemForm').reset();
+            itemIdField.value = '';
+            itemForm.reset();
+            clearFormErrors(itemFields);
+            setValidationLock(itemSaveBtn, false);
+            setRuleLock(itemSaveBtn, false);
+            setSubmittingState(itemSaveBtn, false);
             document.getElementById('itemModalTitle').innerText = 'Add New Item';
-            document.getElementById('initialStockGroup').style.display = 'block'; // Show stock input
+            initialStockGroup.style.display = 'block';
             addItemModal.style.display = 'flex';
         });
 
         // Close/Cancel
-        const closeItem = () => addItemModal.style.display = 'none';
+        const closeItem = () => {
+            addItemModal.style.display = 'none';
+            clearFormErrors(itemFields);
+            setValidationLock(itemSaveBtn, false);
+            setRuleLock(itemSaveBtn, false);
+            setSubmittingState(itemSaveBtn, false);
+        };
+
         document.getElementById('closeAddItem').addEventListener('click', closeItem);
         document.getElementById('cancelAddItem').addEventListener('click', closeItem);
 
         // Edit Button Click
         document.querySelectorAll('.edit-btn').forEach(btn => {
             btn.addEventListener('click', () => {
-                document.getElementById('item_id').value = btn.dataset.id;
-                document.getElementById('itemName').value = btn.dataset.name;
-                document.getElementById('itemSku').value = btn.dataset.sku;
-                document.getElementById('itemCategory').value = btn.dataset.category;
-                document.getElementById('itemPrice').value = btn.dataset.price;
-
-                // Hide Stock input during edit (Stock adjustments should use In/Out)
-                document.getElementById('initialStockGroup').style.display = 'none';
+                itemIdField.value = btn.dataset.id;
+                itemNameField.value = btn.dataset.name;
+                itemSkuField.value = btn.dataset.sku;
+                itemCategoryField.value = btn.dataset.category;
+                itemPriceField.value = btn.dataset.price;
+                itemStockField.value = '';
+                clearFormErrors(itemFields);
+                setValidationLock(itemSaveBtn, false);
+                setRuleLock(itemSaveBtn, false);
+                setSubmittingState(itemSaveBtn, false);
+                initialStockGroup.style.display = 'none';
 
                 document.getElementById('itemModalTitle').innerText = 'Edit Item';
                 addItemModal.style.display = 'flex';
@@ -490,21 +640,30 @@
         // Save Item (Create or Update)
         itemForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const id = document.getElementById('item_id').value;
+
+            if (!validateItemForm()) {
+                lockSubmitUntilFieldChange(itemSaveBtn, itemFields);
+                focusFirstInvalidField(itemFields);
+                return;
+            }
+
+            const id = itemIdField.value;
             const isEdit = !!id;
 
-            const url = isEdit ? `/inventory/${id}` : "{{ route('inventory') }}"; // Adjust route if needed
+            const url = isEdit ? `/inventory/${id}` : "{{ route('inventory') }}";
             const method = isEdit ? 'PUT' : 'POST';
 
             const payload = {
-                name: document.getElementById('itemName').value,
-                sku: document.getElementById('itemSku').value,
-                category_id: document.getElementById('itemCategory').value,
-                price: document.getElementById('itemPrice').value,
-                stock: document.getElementById('itemStock').value || 0
+                name: itemNameField.value.trim(),
+                sku: itemSkuField.value.trim(),
+                category_id: itemCategoryField.value,
+                price: itemPriceField.value.trim(),
+                stock: itemStockField.value.trim() || 0,
             };
 
             try {
+                setSubmittingState(itemSaveBtn, true);
+
                 const res = await fetch(url, {
                     method: method,
                     headers: {
@@ -518,16 +677,27 @@
                 const data = await res.json();
                 if (res.ok) {
                     closeItem();
-                    document.querySelector("button[type='submit']").disabled = false;
                     showSuccess(data.message);
-                    
-                } else showError(data.message || 'Validation failed');
+                } else {
+                    if (res.status === 422 && data.errors) {
+                        if (data.errors.name?.length) setFieldError(itemNameField, data.errors.name[0]);
+                        if (data.errors.sku?.length) setFieldError(itemSkuField, data.errors.sku[0]);
+                        if (data.errors.category_id?.length) setFieldError(itemCategoryField, data.errors.category_id[0]);
+                        if (data.errors.price?.length) setFieldError(itemPriceField, data.errors.price[0]);
+                        if (data.errors.stock?.length) setFieldError(itemStockField, data.errors.stock[0]);
+                        lockSubmitUntilFieldChange(itemSaveBtn, itemFields);
+                        focusFirstInvalidField(itemFields);
+                    }
+                    showError(data.message || 'Validation failed');
+                }
             } catch (err) {
                 showError('System error occurred');
+            } finally {
+                setSubmittingState(itemSaveBtn, false);
             }
         });
 
-        // Delete Item Logic ---
+        // Delete Item Logic
         document.querySelectorAll('.delete-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 const id = btn.dataset.id;
@@ -558,26 +728,79 @@
             });
         });
 
-        // Stock In Logic ---
+        // Stock In Logic
         const stockInModal = document.getElementById('stockInModal');
-        const closeStockIn = () => stockInModal.style.display = 'none';
+        const stockInForm = document.getElementById('stockInForm');
+        const stockInSubmitBtn = document.getElementById('stockInSubmitBtn');
+        const inItemIdField = document.getElementById('inItemId');
+        const inQuantityField = document.getElementById('inQuantity');
+        const inReasonField = document.getElementById('inReason');
+        const stockInFields = [inQuantityField, inReasonField];
+
+        const validateStockInForm = () => {
+            clearFormErrors(stockInFields);
+
+            const quantity = inQuantityField.value.trim();
+            const reason = inReasonField.value.trim();
+            let isValid = true;
+
+            if (!quantity) {
+                setFieldError(inQuantityField, 'Quantity is required.');
+                isValid = false;
+            } else if (!Number.isInteger(Number(quantity)) || Number(quantity) < 1) {
+                setFieldError(inQuantityField, 'Quantity must be a whole number greater than or equal to 1.');
+                isValid = false;
+            }
+
+            if (reason.length > 255) {
+                setFieldError(inReasonField, 'Reason must not exceed 255 characters.');
+                isValid = false;
+            }
+
+            return isValid;
+        };
+
+        bindClearOnInput(stockInFields, clearFieldError);
+
+        const closeStockIn = () => {
+            stockInModal.style.display = 'none';
+            clearFormErrors(stockInFields);
+            setValidationLock(stockInSubmitBtn, false);
+            setRuleLock(stockInSubmitBtn, false);
+            setSubmittingState(stockInSubmitBtn, false);
+        };
+
         document.getElementById('closeStockIn').addEventListener('click', closeStockIn);
         document.getElementById('cancelStockIn').addEventListener('click', closeStockIn);
 
         document.querySelectorAll('.btn-stock-in').forEach(btn => {
             btn.addEventListener('click', () => {
-                document.getElementById('inItemId').value = btn.dataset.id;
+                inItemIdField.value = btn.dataset.id;
                 document.getElementById('inModalSku').innerText = btn.dataset.sku;
                 document.getElementById('inModalCurrentStock').innerText = btn.dataset.stock;
-                document.getElementById('stockInForm').reset();
+                stockInForm.reset();
+                clearFormErrors(stockInFields);
+                setValidationLock(stockInSubmitBtn, false);
+                setRuleLock(stockInSubmitBtn, false);
+                setSubmittingState(stockInSubmitBtn, false);
                 stockInModal.style.display = 'flex';
             });
         });
 
-        document.getElementById('stockInForm').addEventListener('submit', async (e) => {
+        stockInForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const id = document.getElementById('inItemId').value;
+
+            if (!validateStockInForm()) {
+                lockSubmitUntilFieldChange(stockInSubmitBtn, stockInFields);
+                focusFirstInvalidField(stockInFields);
+                return;
+            }
+
+            const id = inItemIdField.value;
+
             try {
+                setSubmittingState(stockInSubmitBtn, true);
+
                 const res = await fetch(`/inventory/${id}/stock-in`, {
                     method: 'POST',
                     headers: {
@@ -586,30 +809,113 @@
                         'X-CSRF-TOKEN': csrfToken
                     },
                     body: JSON.stringify({
-                        quantity: document.getElementById('inQuantity').value,
-                        reason: document.getElementById('inReason').value
+                        quantity: inQuantityField.value.trim(),
+                        reason: inReasonField.value.trim(),
                     })
                 });
                 const data = await res.json();
                 if (res.ok) showSuccess(data.message);
-                else showError(data.message);
+                else {
+                    if (res.status === 422 && data.errors) {
+                        if (data.errors.quantity?.length) setFieldError(inQuantityField, data.errors.quantity[0]);
+                        if (data.errors.reason?.length) setFieldError(inReasonField, data.errors.reason[0]);
+                        lockSubmitUntilFieldChange(stockInSubmitBtn, stockInFields);
+                        focusFirstInvalidField(stockInFields);
+                    }
+                    showError(data.message || 'Validation failed');
+                }
             } catch (err) {
                 showError('System Error');
+            } finally {
+                setSubmittingState(stockInSubmitBtn, false);
             }
         });
 
-        // Stock Out Logic ---
+        // Stock Out Logic
         const stockOutModal = document.getElementById('stockOutModal');
-        const closeStockOut = () => stockOutModal.style.display = 'none';
+        const stockOutForm = document.getElementById('stockOutForm');
+        const stockOutSubmitBtn = document.getElementById('stockOutSubmitBtn');
+        const outItemIdField = document.getElementById('outItemId');
+        const outQuantityField = document.getElementById('outQuantity');
+        const outReasonField = document.getElementById('outReason');
+        const projectedBalanceDisplay = document.getElementById('projectedBalanceDisplay');
+        const stockOutFields = [outQuantityField, outReasonField];
+        let currentStockForOut = 0;
+
+        const updateProjectedBalance = () => {
+            const quantityValue = Number.parseInt(outQuantityField.value, 10);
+            const deduction = Number.isNaN(quantityValue) ? 0 : quantityValue;
+            const projected = currentStockForOut - deduction;
+            const exceedsStock = !Number.isNaN(quantityValue) && quantityValue > currentStockForOut;
+
+            projectedBalanceDisplay.textContent = `${currentStockForOut} - ${deduction} = ${projected}`;
+            projectedBalanceDisplay.classList.toggle('is-negative', exceedsStock);
+
+            if (exceedsStock) {
+                setFieldError(outQuantityField, 'Deduction cannot be greater than current stock.');
+            }
+
+            setRuleLock(stockOutSubmitBtn, exceedsStock);
+        };
+
+        const validateStockOutForm = () => {
+            clearFormErrors(stockOutFields);
+
+            const quantity = outQuantityField.value.trim();
+            const reason = outReasonField.value.trim();
+            let isValid = true;
+
+            if (!quantity) {
+                setFieldError(outQuantityField, 'Quantity is required.');
+                isValid = false;
+            } else if (!Number.isInteger(Number(quantity)) || Number(quantity) < 1) {
+                setFieldError(outQuantityField, 'Quantity must be a whole number greater than or equal to 1.');
+                isValid = false;
+            } else if (Number(quantity) > currentStockForOut) {
+                setFieldError(outQuantityField, 'Deduction cannot be greater than current stock.');
+                isValid = false;
+            }
+
+            if (!reason) {
+                setFieldError(outReasonField, 'Stocking out items should have a reason.');
+                isValid = false;
+            } else if (reason.length > 255) {
+                setFieldError(outReasonField, 'Reason must not exceed 255 characters.');
+                isValid = false;
+            }
+
+            if (!isValid) {
+                lockSubmitUntilFieldChange(stockOutSubmitBtn, stockOutFields);
+            }
+            return isValid;
+        };
+
+        bindClearOnInput(stockOutFields, clearFieldError);
+        outQuantityField.addEventListener('input', updateProjectedBalance);
+
+        const closeStockOut = () => {
+            stockOutModal.style.display = 'none';
+            clearFormErrors(stockOutFields);
+            setRuleLock(stockOutSubmitBtn, false);
+            setSubmittingState(stockOutSubmitBtn, false);
+            projectedBalanceDisplay.textContent = '--';
+            projectedBalanceDisplay.classList.remove('is-negative');
+        };
+
         document.getElementById('closeStockOut').addEventListener('click', closeStockOut);
         document.getElementById('cancelStockOut').addEventListener('click', closeStockOut);
 
         document.querySelectorAll('.btn-stock-out').forEach(btn => {
             btn.addEventListener('click', () => {
-                document.getElementById('outItemId').value = btn.dataset.id;
+                outItemIdField.value = btn.dataset.id;
                 document.getElementById('outModalSku').innerText = btn.dataset.sku;
                 document.getElementById('outModalCurrentStock').innerText = btn.dataset.stock;
-                document.getElementById('stockOutForm').reset();
+                currentStockForOut = Number.parseInt(btn.dataset.stock, 10) || 0;
+                stockOutForm.reset();
+                clearFormErrors(stockOutFields);
+                setRuleLock(stockOutSubmitBtn, false);
+                setSubmittingState(stockOutSubmitBtn, false);
+                updateProjectedBalance();
                 stockOutModal.style.display = 'flex';
             });
         });
@@ -637,10 +943,19 @@
             });
         }
 
-        document.getElementById('stockOutForm').addEventListener('submit', async (e) => {
+        stockOutForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const id = document.getElementById('outItemId').value;
+
+            if (!validateStockOutForm()) {
+                focusFirstInvalidField(stockOutFields);
+                return;
+            }
+
+            const id = outItemIdField.value;
+
             try {
+                setSubmittingState(stockOutSubmitBtn, true);
+
                 const res = await fetch(`/inventory/${id}/stock-out`, {
                     method: 'POST',
                     headers: {
@@ -649,25 +964,28 @@
                         'X-CSRF-TOKEN': csrfToken
                     },
                     body: JSON.stringify({
-                        quantity: document.getElementById('outQuantity').value,
-                        reason: document.getElementById('outReason').value
+                        quantity: outQuantityField.value.trim(),
+                        reason: outReasonField.value.trim(),
                     })
                 });
                 const data = await res.json();
                 if (res.ok) showSuccess(data.message);
-                else showError(data.message); // Will show "Insufficient stock" from controller
+                else {
+                    if (res.status === 422 && data.errors) {
+                        if (data.errors.quantity?.length) setFieldError(outQuantityField, data.errors.quantity[0]);
+                        if (data.errors.reason?.length) setFieldError(outReasonField, data.errors.reason[0]);
+                        lockSubmitUntilFieldChange(stockOutSubmitBtn, stockOutFields);
+                        focusFirstInvalidField(stockOutFields);
+                    }
+                    showError(data.message || 'Validation failed');
+                }
             } catch (err) {
                 showError('System Error');
+            } finally {
+                setSubmittingState(stockOutSubmitBtn, false);
+                updateProjectedBalance();
             }
         });
-
-        // Close modals on outside click
-        // window.addEventListener('click', (e) => {
-        //     if (e.target === addItemModal) closeItem();
-        //     if (e.target === stockInModal) closeStockIn();
-        //     if (e.target === stockOutModal) closeStockOut();
-        //     if (e.target === historyModal) closeHistory();
-        // });
     });
 </script>
 @endpush

@@ -47,6 +47,43 @@
         align-items: center;
     }
 
+    .item-cell {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+    }
+
+    .item-cell-desc {
+        flex: 2;
+    }
+
+    .item-cell-qty {
+        flex: 0.8;
+    }
+
+    .item-cell-price {
+        flex: 1;
+    }
+
+    .input-invalid,
+    .input-invalid:focus {
+        border: 2px solid #dc3545 !important;
+        box-shadow: none !important;
+    }
+
+    .ts-wrapper.ts-invalid .ts-control {
+        border: 2px solid #dc3545 !important;
+        box-shadow: none !important;
+    }
+
+    .field-error {
+        color: #dc3545;
+        font-size: 0.78rem;
+        margin-top: 4px;
+        display: block;
+        min-height: 16px;
+    }
+
     .ts-control {
         border-radius: 6px;
         padding: 10px;
@@ -432,7 +469,7 @@
             <span class="close-modal-btn">&times;</span>
         </div>
 
-        <form class="modal-form" id="createQuoteForm">
+        <form class="modal-form" id="createQuoteForm" novalidate>
             <div class="input-group">
                 <label>Client</label>
                 <select id="clientId" required>
@@ -441,21 +478,25 @@
                     <option value="{{ $client->id }}">{{ $client->name }}</option>
                     @endforeach
                 </select>
+                <span class="field-error" id="clientId-error"></span>
             </div>
 
             <div class="input-group">
                 <label>Subject</label>
                 <input type="text" id="quoteSubject" placeholder="e.g. Garden Maintenance" required>
+                <span class="field-error" id="quoteSubject-error"></span>
             </div>
 
             <div style="display: flex; gap: 10px;">
                 <div class="input-group" style="flex:1;">
                     <label>Quote Date</label>
                     <input type="date" id="quoteDate" required>
+                    <span class="field-error" id="quoteDate-error"></span>
                 </div>
                 <div class="input-group" style="flex:1;">
                     <label>Valid Until</label>
                     <input type="date" id="validUntil" required>
+                    <span class="field-error" id="validUntil-error"></span>
                 </div>
             </div>
 
@@ -465,11 +506,13 @@
                     <span class="add-item-link" id="addItemBtn" style="cursor:pointer; color:#319B72;">+ Add item</span>
                 </div>
                 <div id="itemsContainer"></div>
+                <span class="field-error" id="items-error"></span>
             </div>
 
             <div class="input-group" style="margin-top: 10px;">
                 <label>Total Amount (₱)</label>
                 <input type="text" id="displayTotal" placeholder="0.00" readonly style="font-weight: bold; background-color: #f8fafc;">
+                <span class="field-error" id="displayTotal-error"></span>
             </div>
 
             <div class="modal-actions">
@@ -527,9 +570,63 @@
         const totalInput = document.getElementById('displayTotal');
         const saveBtn = document.getElementById('saveQuoteBtn');
         const addItemBtn = document.getElementById('addItemBtn');
+        const clientInput = document.getElementById('clientId');
+        const subjectInput = document.getElementById('quoteSubject');
+        const quoteDateInput = document.getElementById('quoteDate');
+        const validUntilInput = document.getElementById('validUntil');
 
         let isEditMode = false;
         let editId = null;
+        let submitOriginalText = saveBtn.innerText;
+        let itemRowCounter = 0;
+        let hasTriedSubmit = false;
+
+        const toggleTomSelectInvalid = (isInvalid) => {
+            if (!clientSelect) return;
+            const wrapper = clientSelect.wrapper;
+            if (!wrapper) return;
+            if (isInvalid) {
+                wrapper.classList.add('ts-invalid');
+            } else {
+                wrapper.classList.remove('ts-invalid');
+            }
+        };
+
+        const setFieldError = (input, errorId, message, isTomSelect = false) => {
+            if (input) {
+                if (isTomSelect) {
+                    toggleTomSelectInvalid(true);
+                } else {
+                    input.classList.add('input-invalid');
+                }
+            }
+            const errorEl = document.getElementById(errorId);
+            if (errorEl) errorEl.textContent = message;
+        };
+
+        const clearFieldError = (input, errorId, isTomSelect = false) => {
+            if (input) {
+                if (isTomSelect) {
+                    toggleTomSelectInvalid(false);
+                } else {
+                    input.classList.remove('input-invalid');
+                }
+            }
+            const errorEl = document.getElementById(errorId);
+            if (errorEl) errorEl.textContent = '';
+        };
+
+        const clearAllFormErrors = () => {
+            clearFieldError(clientInput, 'clientId-error', true);
+            clearFieldError(subjectInput, 'quoteSubject-error');
+            clearFieldError(quoteDateInput, 'quoteDate-error');
+            clearFieldError(validUntilInput, 'validUntil-error');
+            clearFieldError(totalInput, 'displayTotal-error');
+            const itemsError = document.getElementById('items-error');
+            if (itemsError) itemsError.textContent = '';
+            itemsContainer.querySelectorAll('.item-desc, .item-qty, .item-price').forEach(el => el.classList.remove('input-invalid'));
+            itemsContainer.querySelectorAll('.field-error[data-item-error]').forEach(el => el.textContent = '');
+        };
 
         // --- Helper Functions ---
 
@@ -543,31 +640,221 @@
             totalInput.value = '₱ ' + total.toLocaleString('en-US', {
                 minimumFractionDigits: 2
             });
+            return total;
         }
 
         function createItemRow(desc = '', qty = 1, price = '') {
             const div = document.createElement('div');
             div.classList.add('item-row');
+            const rowIndex = itemRowCounter++;
             div.innerHTML = `
-                <input type="text" class="input-desc item-desc" placeholder="Description" value="${desc}" required style="flex:2; min-width:0;">
-                <input type="number" class="input-small item-qty" placeholder="Qty" value="${qty}" min="1" required style="flex:0.8; min-width:0;">
-                <input type="number" class="input-small item-price" placeholder="Price" step="0.01" value="${price}" min="0" required style="flex:1; min-width:0;">
+                <div class="item-cell item-cell-desc">
+                    <input type="text" class="input-desc item-desc" id="item-description-${rowIndex}" placeholder="Description" value="${desc}" required style="min-width:0;">
+                    <span class="field-error" data-item-error="desc"></span>
+                </div>
+                <div class="item-cell item-cell-qty">
+                    <input type="number" class="input-small item-qty" id="item-quantity-${rowIndex}" placeholder="Qty" value="${qty}" min="1" required style="min-width:0;">
+                    <span class="field-error" data-item-error="qty"></span>
+                </div>
+                <div class="item-cell item-cell-price">
+                    <input type="number" class="input-small item-price" id="item-price-${rowIndex}" placeholder="Price" step="0.01" value="${price}" min="0" required style="min-width:0;">
+                    <span class="field-error" data-item-error="price"></span>
+                </div>
                 <button type="button" class="btn-remove" style="background:none; color:#ef4444; border:none; cursor:pointer; padding:0 5px; font-size: 1.2rem;">
                     <i class="far fa-trash-alt"></i>
                 </button>
             `;
 
             // Add event listeners for calculation
-            div.querySelectorAll('input').forEach(input => input.addEventListener('input', calculateTotal));
+            div.querySelectorAll('input').forEach(input => {
+                input.addEventListener('input', () => {
+                    calculateTotal();
+                    validateQuoteForm(hasTriedSubmit);
+                });
+            });
 
             // Remove functionality
             div.querySelector('.btn-remove').addEventListener('click', () => {
                 div.remove();
                 calculateTotal();
+                validateQuoteForm(hasTriedSubmit);
             });
 
             itemsContainer.appendChild(div);
             calculateTotal();
+        }
+
+        function validateRow(row, showErrors = false) {
+            let valid = true;
+            const descInput = row.querySelector('.item-desc');
+            const qtyInput = row.querySelector('.item-qty');
+            const priceInput = row.querySelector('.item-price');
+
+            const descError = row.querySelector('[data-item-error="desc"]');
+            const qtyError = row.querySelector('[data-item-error="qty"]');
+            const priceError = row.querySelector('[data-item-error="price"]');
+
+            descInput.classList.remove('input-invalid');
+            qtyInput.classList.remove('input-invalid');
+            priceInput.classList.remove('input-invalid');
+            if (descError) descError.textContent = '';
+            if (qtyError) qtyError.textContent = '';
+            if (priceError) priceError.textContent = '';
+
+            if (!descInput.value.trim()) {
+                if (showErrors) {
+                    descInput.classList.add('input-invalid');
+                    if (descError) descError.textContent = 'Description is required';
+                }
+                valid = false;
+            }
+
+            const qty = parseFloat(qtyInput.value);
+            if (Number.isNaN(qty) || qty < 1) {
+                if (showErrors) {
+                    qtyInput.classList.add('input-invalid');
+                    if (qtyError) qtyError.textContent = 'Quantity must be at least 1';
+                }
+                valid = false;
+            }
+
+            const price = parseFloat(priceInput.value);
+            if (Number.isNaN(price) || price < 0) {
+                if (showErrors) {
+                    priceInput.classList.add('input-invalid');
+                    if (priceError) priceError.textContent = 'Price must be 0 or greater';
+                }
+                valid = false;
+            }
+
+            return valid;
+        }
+
+        function validateQuoteForm(showErrors = false) {
+            let valid = true;
+            const today = new Date().toISOString().split('T')[0];
+
+            if (!clientInput.value) {
+                if (showErrors) {
+                    setFieldError(clientInput, 'clientId-error', 'Client is required', true);
+                }
+                valid = false;
+            } else {
+                clearFieldError(clientInput, 'clientId-error', true);
+            }
+
+            const subjectValue = subjectInput.value.trim();
+            if (!subjectValue) {
+                if (showErrors) {
+                    setFieldError(subjectInput, 'quoteSubject-error', 'Subject is required');
+                }
+                valid = false;
+            } else if (subjectValue.length > 255) {
+                if (showErrors) {
+                    setFieldError(subjectInput, 'quoteSubject-error', 'Subject must not exceed 255 characters');
+                }
+                valid = false;
+            } else {
+                clearFieldError(subjectInput, 'quoteSubject-error');
+            }
+
+            if (!quoteDateInput.value) {
+                if (showErrors) {
+                    setFieldError(quoteDateInput, 'quoteDate-error', 'Quote date is required');
+                }
+                valid = false;
+            } else {
+                clearFieldError(quoteDateInput, 'quoteDate-error');
+            }
+
+            if (!validUntilInput.value) {
+                if (showErrors) {
+                    setFieldError(validUntilInput, 'validUntil-error', 'Valid until date is required');
+                }
+                valid = false;
+            } else if (validUntilInput.value < today) {
+                if (showErrors) {
+                    setFieldError(validUntilInput, 'validUntil-error', 'Valid until date must be today or a future date');
+                }
+                valid = false;
+            } else if (quoteDateInput.value && validUntilInput.value < quoteDateInput.value) {
+                if (showErrors) {
+                    setFieldError(validUntilInput, 'validUntil-error', 'Valid until must be on or after quote date');
+                }
+                valid = false;
+            } else {
+                clearFieldError(validUntilInput, 'validUntil-error');
+            }
+
+            const rows = itemsContainer.querySelectorAll('.item-row');
+            const itemsError = document.getElementById('items-error');
+            if (!rows.length) {
+                if (showErrors && itemsError) itemsError.textContent = 'At least one line item is required';
+                valid = false;
+            } else {
+                if (itemsError) itemsError.textContent = '';
+                rows.forEach(row => {
+                    if (!validateRow(row, showErrors)) valid = false;
+                });
+            }
+
+            const total = calculateTotal();
+            if (total < 0) {
+                if (showErrors) {
+                    setFieldError(totalInput, 'displayTotal-error', 'Total amount must be valid');
+                }
+                valid = false;
+            } else {
+                clearFieldError(totalInput, 'displayTotal-error');
+            }
+
+            saveBtn.disabled = hasTriedSubmit ? !valid : false;
+            return valid;
+        }
+
+        function applyBackendErrors(errors = {}) {
+            if (errors.client_id?.[0]) setFieldError(clientInput, 'clientId-error', errors.client_id[0], true);
+            if (errors.subject?.[0]) setFieldError(subjectInput, 'quoteSubject-error', errors.subject[0]);
+            if (errors.quote_date?.[0]) setFieldError(quoteDateInput, 'quoteDate-error', errors.quote_date[0]);
+            if (errors.valid_until?.[0]) setFieldError(validUntilInput, 'validUntil-error', errors.valid_until[0]);
+            if (errors.items?.[0]) {
+                const itemsError = document.getElementById('items-error');
+                if (itemsError) itemsError.textContent = errors.items[0];
+            }
+
+            itemsContainer.querySelectorAll('.item-row').forEach((row, index) => {
+                const descInput = row.querySelector('.item-desc');
+                const qtyInput = row.querySelector('.item-qty');
+                const priceInput = row.querySelector('.item-price');
+
+                const descError = errors[`items.${index}.description`]?.[0];
+                const qtyError = errors[`items.${index}.quantity`]?.[0];
+                const priceError = errors[`items.${index}.price`]?.[0];
+
+                if (descError) {
+                    descInput.classList.add('input-invalid');
+                    row.querySelector('[data-item-error="desc"]').textContent = descError;
+                }
+                if (qtyError) {
+                    qtyInput.classList.add('input-invalid');
+                    row.querySelector('[data-item-error="qty"]').textContent = qtyError;
+                }
+                if (priceError) {
+                    priceInput.classList.add('input-invalid');
+                    row.querySelector('[data-item-error="price"]').textContent = priceError;
+                }
+            });
+        }
+
+        function setSubmittingState(isSubmitting, label = 'Processing...') {
+            if (isSubmitting) {
+                submitOriginalText = saveBtn.innerText;
+                saveBtn.disabled = true;
+                saveBtn.innerText = label;
+                return;
+            }
+            saveBtn.innerText = submitOriginalText;
+            validateQuoteForm(hasTriedSubmit);
         }
 
         function resetModalState() {
@@ -582,8 +869,11 @@
 
             // Show Save Button and reset text
             saveBtn.style.display = 'inline-block';
+            saveBtn.disabled = false;
 
             form.reset();
+            clearAllFormErrors();
+            hasTriedSubmit = false;
         }
 
         // --- Event Listeners ---
@@ -602,6 +892,7 @@
 
             itemsContainer.innerHTML = '';
             createItemRow();
+            validateQuoteForm(false);
             modal.style.display = 'flex';
         });
 
@@ -629,6 +920,7 @@
                 } else {
                     createItemRow();
                 }
+                validateQuoteForm(false);
                 modal.style.display = 'flex';
             }
         });
@@ -670,6 +962,7 @@
 
                 // Re-disable item inputs (since createItemRow makes them enabled by default)
                 itemsContainer.querySelectorAll('input').forEach(input => input.disabled = true);
+                saveBtn.disabled = true;
 
                 modal.style.display = 'flex';
             }
@@ -684,8 +977,18 @@
             // Only allow adding items if NOT in view mode
             if (!form.classList.contains('view-mode-active')) {
                 createItemRow();
+                validateQuoteForm(hasTriedSubmit);
             }
         });
+
+        [subjectInput, quoteDateInput, validUntilInput, clientInput].forEach(input => {
+            input.addEventListener('input', () => validateQuoteForm(hasTriedSubmit));
+            input.addEventListener('change', () => validateQuoteForm(hasTriedSubmit));
+        });
+
+        if (clientSelect) {
+            clientSelect.on('change', () => validateQuoteForm(hasTriedSubmit));
+        }
 
         // Form Submit (Create/Update)
         form.addEventListener('submit', async (e) => {
@@ -693,6 +996,18 @@
 
             // Safety check: Do not submit if in view mode
             if (form.classList.contains('view-mode-active')) return;
+
+            clearAllFormErrors();
+            hasTriedSubmit = true;
+            if (!validateQuoteForm(true)) {
+                const firstInvalidField = form.querySelector('.input-invalid');
+                if (firstInvalidField) {
+                    firstInvalidField.focus();
+                } else if (!clientInput.value && clientSelect) {
+                    clientSelect.focus();
+                }
+                return;
+            }
 
             const items = [];
             document.querySelectorAll('.item-row').forEach(row => {
@@ -720,10 +1035,7 @@
             }
 
             try {
-                Swal.fire({
-                    title: 'Processing...',
-                    didOpen: () => Swal.showLoading()
-                });
+                setSubmittingState(true);
                 const response = await fetch(url, {
                     method: method,
                     headers: {
@@ -746,11 +1058,17 @@
                         showConfirmButton: false
                     }).then(() => window.location.reload());
                 } else {
+                    if (result.errors) {
+                        applyBackendErrors(result.errors);
+                        validateQuoteForm(true);
+                    }
                     Swal.fire('Error', result.message || 'Validation failed', 'error');
                 }
             } catch (error) {
                 console.error(error);
                 Swal.fire('Error', 'System error occurred', 'error');
+            } finally {
+                setSubmittingState(false);
             }
         });
 

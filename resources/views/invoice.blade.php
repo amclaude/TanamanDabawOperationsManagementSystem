@@ -157,41 +157,38 @@
         margin-top: 10px;
         justify-content: flex-end;
     }
+
     .tab-btn {
-        padding: 8px 16px;
-        border: 1px solid #ddd;
-        background: white;
-        border-radius: 6px;
+        padding: 8px 14px;
+        border: 1px solid #e2e8f0;
+        background: #ffffff;
+        border-radius: 8px;
         cursor: pointer;
-        transition: all 0.2s;
-        font-size: 0.9rem;
-        font-weight: 500;
-    }
-    .tab-btn[data-status="all"] {
-        background: white;
+        transition: all 0.2s ease;
+        font-size: 0.85rem;
+        font-weight: 600;
         color: #64748b;
-        border-color: #ddd;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        line-height: 1;
     }
-    .tab-btn[data-status="draft"] {
-        background: #f1f5f9;
-        color: #64748b;
-        border-color: #e2e8f0;
-    }
-    .tab-btn[data-status="paid"] {
-        background: #dcfce7;
-        color: #16a34a;
-        border-color: #bbf7d0;
-    }
-    .tab-btn.active {
-        background: #319B72;
-        color: white;
-        border-color: #319B72;
-    }
+
     .tab-btn:hover {
-        background: #f0f0f0;
+        background: #f8fafc;
+        border-color: #cbd5e1;
+        color: #475569;
     }
+
+    .tab-btn.active {
+        background: #1a4d32;
+        color: #ffffff;
+        border-color: #1a4d32;
+    }
+
     .tab-btn.active:hover {
-        background: #2a7a5f;
+        background: #143c27;
+        border-color: #143c27;
     }
 
     .input-invalid,
@@ -223,7 +220,7 @@
     </div>
 </div>
 
-<div class="tabs">
+<div class="tabs d-flex justify-content-end gap-2">
     <button class="tab-btn active" data-status="all">All</button>
     <button class="tab-btn" data-status="draft">Draft</button>
     <button class="tab-btn" data-status="paid">Paid</button>

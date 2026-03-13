@@ -148,111 +148,48 @@
         color: #64748b;
     }
 
-    /* Tabs Container */
-    .tabs-container {
+    /* Tabs */
+    .tabs {
         display: flex;
-        justify-content: flex-end;
+        gap: 10px;
         margin-bottom: 20px;
-        border-bottom: 2px solid #e2e8f0;
-        padding-bottom: 10px;
+        margin-top: 10px;
+        justify-content: flex-end;
     }
 
-    /* Status Tabs -*/
-    .status-tabs {
-        display: flex;
-        gap: 6px;
-        align-items: center;
-    }
-
-    .status-tab {
-        padding: 6px 14px;
+    .tab-btn {
+        padding: 8px 14px;
+        border: 1px solid #e2e8f0;
+        background: #ffffff;
+        border-radius: 8px;
         cursor: pointer;
+        transition: all 0.2s ease;
+        font-size: 0.85rem;
         font-weight: 600;
-        border: none;
-        border-radius: 6px;
-        transition: all 0.3s ease;
-        font-size: 0.8rem;
-        display: flex;
+        color: #64748b;
+        display: inline-flex;
         align-items: center;
-        gap: 6px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        gap: 8px;
+        line-height: 1;
     }
 
-    /* Pending Tab - Orange Theme */
-    .status-tab.pending-tab {
-        background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
-        color: #c2410c;
-        border: 1px solid #fed7aa;
+    .tab-btn:hover {
+        background: #f8fafc;
+        border-color: #cbd5e1;
+        color: #475569;
     }
 
-    .status-tab.pending-tab:hover {
-        background: linear-gradient(135deg, #ffedd5 0%, #fed7aa 100%);
-        transform: translateY(-1px);
-        box-shadow: 0 2px 6px rgba(194, 65, 12, 0.2);
+    .tab-btn.active {
+        background: #1a4d32;
+        color: #ffffff;
+        border-color: #1a4d32;
     }
 
-    .status-tab.pending-tab.active {
-        background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
-        color: white;
-        border-color: #c2410c;
-        box-shadow: 0 3px 8px rgba(234, 88, 12, 0.4);
+    .tab-btn.active:hover {
+        background: #143c27;
+        border-color: #143c27;
     }
 
-    /* Accepted Tab - Green Theme */
-    .status-tab.accepted-tab {
-        background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-        color: #15803d;
-        border: 1px solid #bbf7d0;
-    }
-
-    .status-tab.accepted-tab:hover {
-        background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
-        transform: translateY(-1px);
-        box-shadow: 0 2px 6px rgba(21, 128, 61, 0.2);
-    }
-
-    .status-tab.accepted-tab.active {
-        background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
-        color: white;
-        border-color: #15803d;
-        box-shadow: 0 3px 8px rgba(22, 163, 74, 0.4);
-    }
-
-    /* All Tab - Blue Theme */
-    .status-tab.all-tab {
-        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-        color: #1e40af;
-        border: 1px solid #bfdbfe;
-    }
-
-    .status-tab.all-tab:hover {
-        background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%    );
-        transform: translateY(-1px);
-        box-shadow: 0 2px 6px rgba(30, 64, 175, 0.2);
-    }
-
-    .status-tab.all-tab.active {
-        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-        color: white;
-        border-color: #1e40af;
-        box-shadow: 0 3px 8px rgba(37, 99, 235, 0.4);
-    }
-
-    .status-tab .count {
-        background: rgba(255,255,255,0.9);
-        color: inherit;
-        padding: 1px 6px;
-        border-radius: 10px;
-        font-size: 0.7rem;
-        font-weight: 700;
-        min-width: 18px;
-        text-align: center;
-    }
-
-    .status-tab.active .count {
-        background: rgba(255,255,255,0.95);
-        color: #333;
-    }
 
     .table-section {
         display: none;
@@ -287,25 +224,16 @@
     </div>
 </div>
 
-<!-- Tabs Container: Below header, aligned right -->
-<div class="tabs-container">
-    <div class="status-tabs">
-        <button class="status-tab all-tab active" data-status="all" onclick="switchStatusTab('all')">
-            <i class="fas fa-list"></i>
-            All
-            <span class="count">{{ $quoteCounts['all'] }}</span>
-        </button>
-        <button class="status-tab pending-tab" data-status="pending" onclick="switchStatusTab('pending')">
-            <i class="fas fa-clock"></i>
-            Pending
-            <span class="count">{{ $quoteCounts['pending'] }}</span>
-        </button>
-        <button class="status-tab accepted-tab" data-status="accepted" onclick="switchStatusTab('accepted')">
-            <i class="fas fa-check-circle"></i>
-            Accepted
-            <span class="count">{{ $quoteCounts['accepted'] }}</span>
-        </button>
-    </div>
+<div class="tabs d-flex justify-content-end gap-2">
+    <button class="tab-btn active" data-status="all" onclick="switchStatusTab('all')">
+        All
+    </button>
+    <button class="tab-btn" data-status="pending" onclick="switchStatusTab('pending')">
+        Pending
+    </button>
+    <button class="tab-btn" data-status="accepted" onclick="switchStatusTab('accepted')">
+        Accepted
+    </button>
 </div>
 
 <!-- All Quotes Table -->
@@ -558,7 +486,7 @@
     // Tab switching function
     function switchStatusTab(status) {
         // Update tab buttons
-        document.querySelectorAll('.status-tab').forEach(tab => {
+        document.querySelectorAll('.tab-btn').forEach(tab => {
             tab.classList.remove('active');
             if (tab.dataset.status === status) {
                 tab.classList.add('active');

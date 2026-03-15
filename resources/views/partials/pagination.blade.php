@@ -14,7 +14,7 @@
         $start = max(1, $end - $windowSize + 1);
     @endphp
 
-    <nav class="pagination-wrapper" aria-label="Pagination">
+    <nav class="pagination-wrapper {{ $wrapperClass ?? '' }}" aria-label="Pagination navigation">
         <ul class="pagination-list">
             @if ($paginator->onFirstPage())
                 <li><span class="pagination-link is-disabled" aria-disabled="true">&lt;&lt;</span></li>

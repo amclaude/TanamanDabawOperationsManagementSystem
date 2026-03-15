@@ -17,9 +17,25 @@ class QuoteController extends Controller
             ->whereDate('valid_until', '<', now())
             ->update(['status' => 'rejected']);
 
-        $quotes = Quote::with(['client', 'items'])->latest()->paginate(10)->onEachSide(1);
-        $pendingQuotes = $quotes->getCollection()->where('status', 'pending');
-        $acceptedQuotes = $quotes->getCollection()->where('status', 'accepted');
+        $baseQuery = Quote::with(['client', 'items'])->latest();
+
+        $quotes = (clone $baseQuery)
+            ->paginate(10)
+            ->onEachSide(1)
+            ->withQueryString();
+
+        $pendingQuotes = (clone $baseQuery)
+            ->where('status', 'pending')
+            ->paginate(10, ['*'], 'pending_page')
+            ->onEachSide(1)
+            ->withQueryString();
+
+        $acceptedQuotes = (clone $baseQuery)
+            ->where('status', 'accepted')
+            ->paginate(10, ['*'], 'accepted_page')
+            ->onEachSide(1)
+            ->withQueryString();
+
         $quoteCounts = [
             'all' => Quote::count(),
             'pending' => Quote::where('status', 'pending')->count(),

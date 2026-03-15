@@ -207,7 +207,7 @@
     </div>
 </div>
 
-<div class="table-container loading-scope table-loading-scope" data-loading-scope="network">
+<div class="table-container table-fixed-layout loading-scope table-loading-scope" data-loading-scope="network">
     <div class="skeleton-overlay" aria-hidden="true">
         <div class="skeleton table-skeleton-row"></div>
         <div class="skeleton table-skeleton-row"></div>
@@ -216,6 +216,7 @@
         <div class="skeleton table-skeleton-row"></div>
     </div>
     <div class="loading-content">
+    <div class="table-scroll">
     <table class="data-table">
         <thead>
             <tr>
@@ -264,23 +265,25 @@
                         </button>
                     </div>
                 </td>
-                <td>
-                    {{-- Edit Button --}}
-                    <button class="action-btn edit-btn"
-                        data-id="{{ $item->id }}"
-                        data-name="{{ $item->item_name }}"
-                        data-sku="{{ $item->sku }}"
-                        data-category="{{ $item->category_id }}"
-                        data-price="{{ $item->price }}"
-                        data-stock="{{ $item->stock_level }}">
-                        <i class="fas fa-pen"></i>
-                    </button>
+                <td class="actions-cell-nowrap">
+                    <div class="d-flex flex-row justify-content-start gap-2 table-action-buttons">
+                        {{-- Edit Button --}}
+                        <button class="action-btn edit-btn"
+                            data-id="{{ $item->id }}"
+                            data-name="{{ $item->item_name }}"
+                            data-sku="{{ $item->sku }}"
+                            data-category="{{ $item->category_id }}"
+                            data-price="{{ $item->price }}"
+                            data-stock="{{ $item->stock_level }}">
+                            <i class="fas fa-pen"></i>
+                        </button>
 
-                    {{-- Delete Button --}}
-                    <button class="action-btn delete delete-btn"
-                        data-id="{{ $item->id }}">
-                        <i class="far fa-trash-alt"></i>
-                    </button>
+                        {{-- Delete Button --}}
+                        <button class="action-btn delete delete-btn"
+                            data-id="{{ $item->id }}">
+                            <i class="far fa-trash-alt"></i>
+                        </button>
+                    </div>
                 </td>
             </tr>
             @empty
@@ -291,9 +294,12 @@
         </tbody>
     </table>
     </div>
-</div>
 
-@include('partials.pagination', ['data' => $inventoryItems->appends(request()->query())])
+    <div class="table-pagination-sticky">
+        @include('partials.pagination', ['data' => $inventoryItems->appends(request()->query())])
+    </div>
+    </div>
+</div>
 
 <div class="modal-overlay" id="historyModal">
     {{-- Made this modal wider (max-width: 800px) so the table fits well --}}

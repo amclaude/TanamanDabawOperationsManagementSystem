@@ -152,10 +152,14 @@
     /* --- TABS STYLES --- */
     .tabs {
         display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        row-gap: 8px;
         gap: 10px;
         margin-bottom: 20px;
         margin-top: 10px;
         justify-content: flex-end;
+        width: 100%;
     }
 
     .tab-btn {
@@ -189,6 +193,35 @@
     .tab-btn.active:hover {
         background: #143c27;
         border-color: #143c27;
+    }
+
+    @media (max-width: 1024px) {
+        .tabs {
+            gap: 8px;
+            row-gap: 7px;
+            margin-bottom: 16px;
+        }
+
+        .tab-btn {
+            padding: 7px 12px;
+            font-size: 0.8rem;
+            border-radius: 7px;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .tabs {
+            gap: 6px;
+            row-gap: 6px;
+            margin-bottom: 14px;
+            justify-content: flex-start;
+        }
+
+        .tab-btn {
+            padding: 6px 10px;
+            font-size: 0.76rem;
+            border-radius: 7px;
+        }
     }
 
     .input-invalid,
@@ -226,7 +259,7 @@
     <button class="tab-btn" data-status="paid">Paid</button>
 </div>
 
-<div class="table-container loading-scope table-loading-scope" data-loading-scope="network">
+<div class="table-container table-fixed-layout loading-scope table-loading-scope" data-loading-scope="network">
     <div class="skeleton-overlay" aria-hidden="true">
         <div class="skeleton table-skeleton-row"></div>
         <div class="skeleton table-skeleton-row"></div>
@@ -235,6 +268,7 @@
         <div class="skeleton table-skeleton-row"></div>
     </div>
     <div class="loading-content">
+    <div class="table-scroll">
     <table class="data-table">
         <thead>
             <tr>
@@ -324,15 +358,18 @@
             </tr>
             @empty
             <tr>
-                <td colspan="6" style="text-align: center; padding: 30px; color: #64748b;">No invoices found.</td>
+                <td colspan="6" style="text-align: center; padding: 40px; color: #64748b;">No invoices found.</td>
             </tr>
             @endforelse
         </tbody>
     </table>
     </div>
-</div>
 
-@include('partials.pagination', ['data' => $invoices->appends(request()->query())])
+    <div class="table-pagination-sticky">
+        @include('partials.pagination', ['data' => $invoices->appends(request()->query())])
+    </div>
+    </div>
+</div>
 
 {{-- MODAL --}}
 <div class="modal-overlay" id="invoiceModal">

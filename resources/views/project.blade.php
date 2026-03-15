@@ -190,6 +190,7 @@
         25% { transform: translateX(-5px); }
         75% { transform: translateX(5px); }
     }
+
 </style>
 @endpush
 
@@ -212,7 +213,7 @@
     </div>
 </div>
 
-<div class="table-container loading-scope table-loading-scope" data-loading-scope="network">
+<div class="table-container table-fixed-layout loading-scope table-loading-scope" data-loading-scope="network">
     <div class="skeleton-overlay" aria-hidden="true">
         <div class="skeleton table-skeleton-row"></div>
         <div class="skeleton table-skeleton-row"></div>
@@ -221,64 +222,72 @@
         <div class="skeleton table-skeleton-row"></div>
     </div>
     <div class="loading-content">
-    <table class="data-table">
-        <thead>
-            <tr>
-                <th>Project Name</th>
-                <th>Client</th>
-                <th>Head Landscaper</th>
-                <th>Crew</th>
-                <th>Status</th>
-                <th>Deadline</th>
-                <th>Budget</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody id="projectsTableBody">
-            @forelse($projects as $project)
-            <tr data-href="{{ route('projects.panel', $project->id) }}">
-                <td>{{ $project->project_name }}</td>
-                <td>{{ $project->client->name ?? 'N/A' }}</td>
-                <td>{{ $project->headLandscaper->name ?? 'Unassigned' }}</td>
-                <td>
-                    <span class="badge" style="background: #f1f5f9; color: #475569; padding: 2px 8px; border-radius: 6px; font-size: 0.8em;">
-                        {{ $project->fieldCrew->count() }} Members
-                    </span>
-                </td>
-                <td>
-                    <span class="status-badge {{ $project->is_active ? 'active' : 'completed' }}">
-                        {{ $project->is_active ? 'Active' : 'Done' }}
-                    </span>
-                </td>
-                <td>{{ $project->project_end_date }}</td>
-                <td>₱{{ number_format($project->project_budget, 2) }}</td>
-                <td>
-                    <button class="btn-primary edit-btn"
-                        data-id="{{ $project->id }}"
-                        data-name="{{ $project->project_name }}"
-                        data-client-id="{{ $project->client_id }}"
-                        data-quote-id="{{ $project->quote_id }}"
-                        data-start-date="{{ \Illuminate\Support\Carbon::parse($project->project_start_date)->format('Y-m-d') }}"
-                        data-deadline="{{ $project->project_end_date }}"
-                        data-budget="{{ $project->project_budget }}"
-                        data-location="{{ $project->project_location }}"
-                        data-description="{{ $project->project_description }}"
-                        data-head-id="{{ $project->head_landscaper_id }}"
-                        data-crew="{{ $project->fieldCrew->pluck('id') }}">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn-danger delete-btn" data-id="{{ $project->id }}"><i class="fas fa-trash"></i></button>
-                </td>
-            </tr>
-            @empty
-            <tr><td colspan="8" style="text-align: center; padding: 40px; color: #64748b;">No projects found.</td></tr>
-            @endforelse
-        </tbody>
-    </table>
+        <div class="table-scroll">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Project Name</th>
+                        <th>Client</th>
+                        <th>Head Landscaper</th>
+                        <th>Crew</th>
+                        <th>Status</th>
+                        <th>Deadline</th>
+                        <th>Budget</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="projectsTableBody">
+                    @forelse($projects as $project)
+                    <tr data-href="{{ route('projects.panel', $project->id) }}">
+                        <td>{{ $project->project_name }}</td>
+                        <td>{{ $project->client->name ?? 'N/A' }}</td>
+                        <td>{{ $project->headLandscaper->name ?? 'Unassigned' }}</td>
+                        <td>
+                            <span class="badge" style="background: #f1f5f9; color: #475569; padding: 2px 8px; border-radius: 6px; font-size: 0.8em;">
+                                {{ $project->fieldCrew->count() }} Members
+                            </span>
+                        </td>
+                        <td>
+                            <span class="status-badge {{ $project->is_active ? 'active' : 'completed' }}">
+                                {{ $project->is_active ? 'Active' : 'Done' }}
+                            </span>
+                        </td>
+                        <td>{{ $project->project_end_date }}</td>
+                        <td>₱{{ number_format($project->project_budget, 2) }}</td>
+                        <td class="actions-cell-nowrap">
+                            <div class="d-flex flex-row justify-content-start gap-2 table-action-buttons">
+                                <button class="btn-primary edit-btn"
+                                    data-id="{{ $project->id }}"
+                                    data-name="{{ $project->project_name }}"
+                                    data-client-id="{{ $project->client_id }}"
+                                    data-quote-id="{{ $project->quote_id }}"
+                                    data-start-date="{{ \Illuminate\Support\Carbon::parse($project->project_start_date)->format('Y-m-d') }}"
+                                    data-deadline="{{ $project->project_end_date }}"
+                                    data-budget="{{ $project->project_budget }}"
+                                    data-location="{{ $project->project_location }}"
+                                    data-description="{{ $project->project_description }}"
+                                    data-head-id="{{ $project->head_landscaper_id }}"
+                                    data-crew="{{ $project->fieldCrew->pluck('id') }}">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn-danger delete-btn" data-id="{{ $project->id }}"><i class="fas fa-trash"></i></button>
+                            </div>
+                        </td>
+                    </tr>
+                    @empty
+                    <tr><td colspan="8" style="text-align: center; padding: 40px; color: #64748b;">No projects found.</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+
+        <div class="table-pagination-sticky">
+            @include('partials.pagination', [
+                'data' => $projects->appends(request()->query()),
+            ])
+        </div>
     </div>
 </div>
-
-@include('partials.pagination', ['data' => $projects->appends(request()->query())])
 
 <div class="modal-overlay" id="addProjectModal">
     <div class="modal-box">

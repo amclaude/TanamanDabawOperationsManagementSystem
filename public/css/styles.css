@@ -407,7 +407,9 @@ body {
 
     color: #A5F1CE;
 
-    height: 100%;
+    height: calc(100vh - 50px);
+
+    height: calc(100dvh - 50px);
 
     display: flex;
 
@@ -419,7 +421,13 @@ body {
 
 }
 
-.sidebar-menu { list-style: none; padding: 20px 15px; flex-grow: 1; }
+.sidebar-menu {
+    list-style: none;
+    padding: 20px 15px;
+    flex-grow: 1;
+    min-height: 0;
+    overflow-y: auto;
+}
 
 .sidebar-menu li { margin-bottom: 8px; }
 
@@ -455,7 +463,11 @@ body {
 
 
 
-.sidebar-footer { padding: 20px; border-top: 1px solid rgba(165, 241, 206, 0.2); }
+.sidebar-bottom { margin-top: auto; }
+
+.sidebar-logout-form { margin: 0; }
+
+.sidebar-footer { padding: 16px 20px 20px; border-top: 1px solid rgba(165, 241, 206, 0.2); }
 
 .sign-out-link {
 
@@ -464,6 +476,18 @@ body {
     color: #A5F1CE; text-decoration: none;
 
     padding: 10px 15px;
+
+    border: none;
+
+    background: none;
+
+    width: 100%;
+
+    text-align: left;
+
+    cursor: pointer;
+
+    font-size: 1rem;
 
 }
 
@@ -480,6 +504,8 @@ body {
 .sidebar.collapsed .sidebar-menu li a i { margin-right: 0; }
 .sidebar.collapsed .sidebar-menu li a .label { display: none; }
 .sidebar.collapsed .sidebar-footer .sign-out-link { justify-content: center; }
+.sidebar.collapsed .sidebar-footer .sign-out-link .sign-out-text { display: none; }
+.sidebar.collapsed .sidebar-footer .sign-out-link i { margin-right: 0; }
 
 /* Also apply when persisted via html attribute to avoid jump on page load */
 html[data-sidebar-collapsed="1"] .sidebar {
@@ -490,6 +516,20 @@ html[data-sidebar-collapsed="1"] .sidebar .sidebar-menu li a { justify-content: 
 html[data-sidebar-collapsed="1"] .sidebar .sidebar-menu li a i { margin-right: 0; }
 html[data-sidebar-collapsed="1"] .sidebar .sidebar-menu li a .label { display: none; }
 html[data-sidebar-collapsed="1"] .sidebar .sidebar-footer .sign-out-link { justify-content: center; }
+html[data-sidebar-collapsed="1"] .sidebar .sidebar-footer .sign-out-link .sign-out-text { display: none; }
+html[data-sidebar-collapsed="1"] .sidebar .sidebar-footer .sign-out-link i { margin-right: 0; }
+
+.sidebar[data-collapsed="true"] .sidebar-footer .sign-out-link {
+    justify-content: center;
+}
+
+.sidebar[data-collapsed="true"] .sidebar-footer .sign-out-link .sign-out-text {
+    display: none;
+}
+
+.sidebar[data-collapsed="true"] .sidebar-footer .sign-out-link i {
+    margin-right: 0;
+}
 
 
 
@@ -737,9 +777,72 @@ html[data-sidebar-collapsed="1"] .sidebar .sidebar-footer .sign-out-link { justi
 
 .btn-primary:hover { background-color: #226a53; }
 
+.actions-cell-nowrap {
+    white-space: nowrap;
+}
+
+.table-action-buttons {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: nowrap;
+}
+
+.table-action-buttons .btn-action,
+.table-action-buttons .action-btn,
+.table-action-buttons .btn-primary,
+.table-action-buttons .btn-danger {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    padding: 0;
+    margin-right: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
 
 
 .table-container { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); overflow-x: auto; }
+
+.table-fixed-layout {
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.table-scroll {
+    max-height: 70vh;
+    overflow: auto;
+}
+
+.table-pagination-sticky {
+    position: sticky;
+    bottom: 0;
+    z-index: 3;
+    background: #fff;
+    border-top: 1px solid #e2e8f0;
+    padding: 0.75rem 0.5rem;
+}
+
+.table-pagination-sticky .pagination-wrapper {
+    margin-top: 0 !important;
+    padding: 0;
+}
+
+@media (max-width: 768px) {
+    .table-scroll {
+        max-height: 62vh;
+    }
+
+    .table-pagination-sticky {
+        padding: 0.6rem 0.35rem;
+    }
+}
 
 .data-table { width: 100%; border-collapse: collapse; min-width: 600px; }
 
@@ -1313,6 +1416,8 @@ html[data-sidebar-collapsed="1"] .sidebar .sidebar-footer .sign-out-link { justi
 
         height: calc(100vh - 50px);
 
+        height: calc(100dvh - 50px);
+
         z-index: 1001;
 
         transition: left 0.3s ease; 
@@ -1325,6 +1430,22 @@ html[data-sidebar-collapsed="1"] .sidebar .sidebar-footer .sign-out-link { justi
 
         left: 0; 
 
+    }
+
+    .sidebar-menu {
+        padding: 16px 12px;
+    }
+
+    .sidebar-menu li {
+        margin-bottom: 6px;
+    }
+
+    .sidebar-menu li a {
+        padding: 10px 16px;
+    }
+
+    .sidebar-footer {
+        padding: 14px 16px 16px;
     }
 
 

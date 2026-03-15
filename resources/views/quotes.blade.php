@@ -151,10 +151,14 @@
     /* Tabs */
     .tabs {
         display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        row-gap: 8px;
         gap: 10px;
         margin-bottom: 20px;
         margin-top: 10px;
         justify-content: flex-end;
+        width: 100%;
     }
 
     .tab-btn {
@@ -188,6 +192,35 @@
     .tab-btn.active:hover {
         background: #143c27;
         border-color: #143c27;
+    }
+
+    @media (max-width: 1024px) {
+        .tabs {
+            gap: 8px;
+            row-gap: 7px;
+            margin-bottom: 16px;
+        }
+
+        .tab-btn {
+            padding: 7px 12px;
+            font-size: 0.8rem;
+            border-radius: 7px;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .tabs {
+            gap: 6px;
+            row-gap: 6px;
+            margin-bottom: 14px;
+            justify-content: flex-start;
+        }
+
+        .tab-btn {
+            padding: 6px 10px;
+            font-size: 0.76rem;
+            border-radius: 7px;
+        }
     }
 
 
@@ -238,7 +271,7 @@
 
 <!-- All Quotes Table -->
 <div class="table-section active" id="all-section">
-    <div class="table-container loading-scope table-loading-scope" data-loading-scope="network">
+    <div class="table-container table-fixed-layout loading-scope table-loading-scope" data-loading-scope="network">
         <div class="skeleton-overlay" aria-hidden="true">
             <div class="skeleton table-skeleton-row"></div>
             <div class="skeleton table-skeleton-row"></div>
@@ -247,6 +280,7 @@
             <div class="skeleton table-skeleton-row"></div>
         </div>
         <div class="loading-content">
+        <div class="table-scroll">
         <table class="data-table">
             <thead>
                 <tr>
@@ -269,35 +303,43 @@
                     <td>
                         <span class="status-badge {{ strtolower($quote->status) }}">{{ ucfirst($quote->status) }}</span>
                     </td>
-                    <td>
-                        @if(strtolower($quote->status) === 'archived')
-                        <button class="btn-action view-btn" data-quote="{{ json_encode($quote) }}" title="View Details">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                        @else
-                        <button class="btn-action edit-btn" data-quote="{{ json_encode($quote) }}" title="Edit">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="btn-action delete-btn" data-id="{{ $quote->id }}" title="Delete">
-                            <i class="fas fa-trash-alt"></i>
-                        </button>
-                        @endif
+                    <td class="actions-cell-nowrap">
+                        <div class="d-flex flex-row justify-content-start gap-2 table-action-buttons">
+                            @if(strtolower($quote->status) === 'archived')
+                            <button class="btn-action view-btn" data-quote="{{ json_encode($quote) }}" title="View Details">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            @else
+                            <button class="btn-action edit-btn" data-quote="{{ json_encode($quote) }}" title="Edit">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn-action delete-btn" data-id="{{ $quote->id }}" title="Delete">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                            @endif
+                        </div>
                     </td>
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="5" style="text-align: center; padding: 20px; color: #64748b;">No quotes found.</td>
+                    <td colspan="5" style="text-align: center; padding: 40px; color: #64748b;">No quotes found.</td>
                 </tr>
                 @endforelse
             </tbody>
         </table>
+        </div>
+
+        <div class="table-pagination-sticky">
+            @include('partials.pagination', ['data' => $quotes])
+        </div>
+
         </div>
     </div>
 </div>
 
 <!-- Pending Quotes Table -->
 <div class="table-section" id="pending-section">
-    <div class="table-container loading-scope table-loading-scope" data-loading-scope="network">
+    <div class="table-container table-fixed-layout loading-scope table-loading-scope" data-loading-scope="network">
         <div class="skeleton-overlay" aria-hidden="true">
             <div class="skeleton table-skeleton-row"></div>
             <div class="skeleton table-skeleton-row"></div>
@@ -306,6 +348,7 @@
             <div class="skeleton table-skeleton-row"></div>
         </div>
         <div class="loading-content">
+        <div class="table-scroll">
         <table class="data-table">
             <thead>
                 <tr>
@@ -328,35 +371,42 @@
                     <td>
                         <span class="status-badge {{ strtolower($quote->status) }}">{{ ucfirst($quote->status) }}</span>
                     </td>
-                    <td>
-                        @if(strtolower($quote->status) === 'archived')
-                        <button class="btn-action view-btn" data-quote="{{ json_encode($quote) }}" title="View Details">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                        @else
-                        <button class="btn-action edit-btn" data-quote="{{ json_encode($quote) }}" title="Edit">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="btn-action delete-btn" data-id="{{ $quote->id }}" title="Delete">
-                            <i class="fas fa-trash-alt"></i>
-                        </button>
-                        @endif
+                    <td class="actions-cell-nowrap">
+                        <div class="d-flex flex-row justify-content-start gap-2 table-action-buttons">
+                            @if(strtolower($quote->status) === 'archived')
+                            <button class="btn-action view-btn" data-quote="{{ json_encode($quote) }}" title="View Details">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            @else
+                            <button class="btn-action edit-btn" data-quote="{{ json_encode($quote) }}" title="Edit">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn-action delete-btn" data-id="{{ $quote->id }}" title="Delete">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                            @endif
+                        </div>
                     </td>
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="5" style="text-align: center; padding: 20px; color: #64748b;">No pending quotes found.</td>
+                    <td colspan="5" style="text-align: center; padding: 40px; color: #64748b;">No pending quotes found.</td>
                 </tr>
                 @endforelse
             </tbody>
         </table>
+        </div>
+
+        <div class="table-pagination-sticky">
+            @include('partials.pagination', ['data' => $pendingQuotes])
+        </div>
         </div>
     </div>
 </div>
 
 <!-- Accepted Quotes Table -->
 <div class="table-section" id="accepted-section">
-    <div class="table-container loading-scope table-loading-scope" data-loading-scope="network">
+    <div class="table-container table-fixed-layout loading-scope table-loading-scope" data-loading-scope="network">
         <div class="skeleton-overlay" aria-hidden="true">
             <div class="skeleton table-skeleton-row"></div>
             <div class="skeleton table-skeleton-row"></div>
@@ -365,6 +415,7 @@
             <div class="skeleton table-skeleton-row"></div>
         </div>
         <div class="loading-content">
+        <div class="table-scroll">
         <table class="data-table">
             <thead>
                 <tr>
@@ -387,33 +438,38 @@
                     <td>
                         <span class="status-badge {{ strtolower($quote->status) }}">{{ ucfirst($quote->status) }}</span>
                     </td>
-                    <td>
-                        @if(strtolower($quote->status) === 'archived')
-                        <button class="btn-action view-btn" data-quote="{{ json_encode($quote) }}" title="View Details">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                        @else
-                        <button class="btn-action edit-btn" data-quote="{{ json_encode($quote) }}" title="Edit">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="btn-action delete-btn" data-id="{{ $quote->id }}" title="Delete">
-                            <i class="fas fa-trash-alt"></i>
-                        </button>
-                        @endif
+                    <td class="actions-cell-nowrap">
+                        <div class="d-flex flex-row justify-content-start gap-2 table-action-buttons">
+                            @if(strtolower($quote->status) === 'archived')
+                            <button class="btn-action view-btn" data-quote="{{ json_encode($quote) }}" title="View Details">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            @else
+                            <button class="btn-action edit-btn" data-quote="{{ json_encode($quote) }}" title="Edit">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn-action delete-btn" data-id="{{ $quote->id }}" title="Delete">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                            @endif
+                        </div>
                     </td>
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="5" style="text-align: center; padding: 20px; color: #64748b;">No accepted quotes found.</td>
+                    <td colspan="5" style="text-align: center; padding: 40px; color: #64748b;">No accepted quotes found.</td>
                 </tr>
                 @endforelse
             </tbody>
         </table>
         </div>
+
+        <div class="table-pagination-sticky">
+            @include('partials.pagination', ['data' => $acceptedQuotes])
+        </div>
+        </div>
     </div>
 </div>
-
-@include('partials.pagination', ['data' => $quotes->appends(request()->query())])
 
 <div class="modal-overlay" id="addQuoteModal">
     <div class="modal-box">

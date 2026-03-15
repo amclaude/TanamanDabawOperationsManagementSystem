@@ -49,12 +49,15 @@
             </a>
         </li>
     </ul>
-    <form method="POST" action="{{ route('logout') }}">
-        @csrf
-        <div class="sidebar-footer">
-            <button type="submit" class="sign-out-link" style="border: none; background: none; width: 100%; text-align: left; cursor: pointer; font-size: 1rem;">
-                <i class="fas fa-sign-out-alt"></i> <span class="label">Sign Out</span>
-            </button>
-        </div>
-    </form>
+
+    <div class="sidebar-bottom">
+        <form method="POST" action="{{ route('logout') }}" class="sidebar-logout-form">
+            @csrf
+            <div class="sidebar-footer">
+                <button type="submit" class="sign-out-link">
+                    <i class="fas fa-sign-out-alt"></i> <span class="label sign-out-text">Sign Out</span>
+                </button>
+            </div>
+        </form>
+    </div>
 </aside>

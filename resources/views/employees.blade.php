@@ -137,7 +137,7 @@
     </div>
 </div>
 
-<div class="table-container loading-scope table-loading-scope" data-loading-scope="network">
+<div class="table-container table-fixed-layout loading-scope table-loading-scope" data-loading-scope="network">
     <div class="skeleton-overlay" aria-hidden="true">
         <div class="skeleton table-skeleton-row"></div>
         <div class="skeleton table-skeleton-row"></div>
@@ -146,6 +146,7 @@
         <div class="skeleton table-skeleton-row"></div>
     </div>
     <div class="loading-content">
+    <div class="table-scroll">
     <table class="data-table">
         <thead>
             <tr>
@@ -169,8 +170,8 @@
                         {{ $emp->status }}
                     </span>
                 </td>
-                <td>
-                    <div>
+                <td class="actions-cell-nowrap">
+                    <div class="d-flex flex-row justify-content-start gap-2 table-action-buttons">
                         {{-- 
                             LOGIC: 
                             1. Admin can edit everyone.
@@ -207,9 +208,12 @@
         </tbody>
     </table>
     </div>
-</div>
 
-@include('partials.pagination', ['data' => $employees->appends(request()->query())])
+    <div class="table-pagination-sticky">
+        @include('partials.pagination', ['data' => $employees->appends(request()->query())])
+    </div>
+    </div>
+</div>
 
 <div class="modal-overlay" id="employeeModal" style="display: none;">
     <div class="modal-box">

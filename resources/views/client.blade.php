@@ -78,7 +78,7 @@
     </div>
 </div>
 
-<div class="table-container loading-scope table-loading-scope" data-loading-scope="network">
+<div class="table-container table-fixed-layout loading-scope table-loading-scope" data-loading-scope="network">
     <div class="skeleton-overlay" aria-hidden="true">
         <div class="skeleton table-skeleton-row"></div>
         <div class="skeleton table-skeleton-row"></div>
@@ -87,6 +87,7 @@
         <div class="skeleton table-skeleton-row"></div>
     </div>
     <div class="loading-content">
+    <div class="table-scroll">
     <table class="data-table">
         <thead>
             <tr>
@@ -104,26 +105,28 @@
                 <td>{{ $client->email }}</td>
                 <td>{{ $client->phone ?? 'N/A' }}</td>
                 <td>{{ $client->address ?? 'N/A' }}</td>
-                <td>
-                    {{-- Both Roles can Edit --}}
-                    <button class="btn-primary edit-btn"
-                        title="Edit Client"
-                        data-id="{{ $client->id }}"
-                        data-name="{{ $client->name }}"
-                        data-email="{{ $client->email }}"
-                        data-phone="{{ $client->phone }}"
-                        data-address="{{ $client->address }}">
-                        <i class="fas fa-edit"></i>
-                    </button>
+                <td class="actions-cell-nowrap">
+                    <div class="d-flex flex-row justify-content-start gap-2 table-action-buttons">
+                        {{-- Both Roles can Edit --}}
+                        <button class="btn-primary edit-btn"
+                            title="Edit Client"
+                            data-id="{{ $client->id }}"
+                            data-name="{{ $client->name }}"
+                            data-email="{{ $client->email }}"
+                            data-phone="{{ $client->phone }}"
+                            data-address="{{ $client->address }}">
+                            <i class="fas fa-edit"></i>
+                        </button>
 
-                    {{-- SECURITY UPDATE: Only 'Admin' can see the Delete button --}}
-                    @if(auth()->user()->role === 'Admin')
-                    <button class="btn-danger delete-btn"
-                        title="Delete Client"
-                        data-id="{{ $client->id }}">
-                        <i class="fas fa-trash-alt"></i>
-                    </button>
-                    @endif
+                        {{-- SECURITY UPDATE: Only 'Admin' can see the Delete button --}}
+                        @if(auth()->user()->role === 'Admin')
+                        <button class="btn-danger delete-btn"
+                            title="Delete Client"
+                            data-id="{{ $client->id }}">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                        @endif
+                    </div>
                 </td>
             </tr>
             @empty
@@ -137,9 +140,12 @@
     </table>
     </div>
 
-</div>
+    <div class="table-pagination-sticky">
+        @include('partials.pagination', ['data' => $clients->appends(request()->query())])
+    </div>
+    </div>
 
-@include('partials.pagination', ['data' => $clients->appends(request()->query())])
+</div>
 
 <div class="modal-overlay" id="clientModal">
     <div class="modal-box">

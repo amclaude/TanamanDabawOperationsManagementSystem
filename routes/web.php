@@ -15,6 +15,9 @@ use GuzzleHttp\Middleware;
 use Illuminate\Support\Facades\Route;
 
 
+Route::get('/status', function () {
+    return response('ok', 200);
+});
 
 Route::middleware(['not.installed'])->group(function () {
     Route::get('/setup', [SetupController::class, 'index'])->name('setup');

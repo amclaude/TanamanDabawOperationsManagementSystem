@@ -10,6 +10,15 @@ class ClientController extends Controller
     public function index(Request $request)
     {
         $query = Client::query();
+
+        if ($request->has('search') && ! empty($request->search)) {
+            $search = $request->search;
+            $query->where('name', 'LIKE', "%{$search}%")
+                ->orWhere('email', 'LIKE', "%{$search}%")
+                ->orWhere('phone', 'LIKE', "%{$search}%")
+                ->orWhere('address', 'LIKE', "%{$search}%");
+        }
+
         $clients = $query->paginate(10)->onEachSide(1);
 
         return view('client', compact('clients'));

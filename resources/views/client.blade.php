@@ -476,6 +476,19 @@ if (saveBtn) {
                 }
             });
         }
+
+        // --- SEARCH FUNCTIONALITY ---
+        const searchInput = document.getElementById('searchInput');
+        const tableBody = document.getElementById('clientTableBody');
+        if (searchInput && tableBody) {
+            searchInput.addEventListener('keyup', function() {
+                const filter = searchInput.value.toLowerCase();
+                const rows = tableBody.getElementsByTagName('tr');
+                for (let i = 0; i < rows.length; i++) {
+                    const textContent = rows[i].innerText.toLowerCase();
+                    rows[i].style.display = textContent.includes(filter) ? "" : "none";
+                }
+            });
+        }
     });
 </script>
-@endpush

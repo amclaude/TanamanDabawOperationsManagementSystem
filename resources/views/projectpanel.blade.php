@@ -649,8 +649,12 @@
                     if(res.isConfirmed) {
                         fetch(`/projects/{{ $project->id }}/complete`, {
                             method: 'PATCH', headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Content-Type': 'application/json' }
-                        }).then(r => r.json()).then(d => {
-                            Swal.fire('Error!', d.message, 'error').then(() => window.location.reload());
+                        }).then(r => r.json().then(data => ({ data, ok: r.ok }))).then(({ data, ok }) => {
+                            if (ok) {
+                                Swal.fire('Success!', data.message, 'success').then(() => window.location.reload());
+                            } else {
+                                Swal.fire('Error!', data.message, 'error');
+                            }
                         });
                     }
                 });
